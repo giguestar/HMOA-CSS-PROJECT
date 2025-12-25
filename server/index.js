@@ -1,9 +1,15 @@
 import express from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import db, { initDatabase } from './database.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Middleware
 app.use(cors({
@@ -19,6 +25,13 @@ app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.path} - Origin: ${req.headers.origin || 'no-origin'}`);
   next();
 });
+
+// Serve static files in production
+if (isProduction) {
+  const distPath = join(__dirname, '..', 'dist');
+  app.use(express.static(distPath));
+  console.log(`📂 Serving static files from: ${distPath}`);
+}
 
 // Initialize database
 initDatabase().catch(err => {
@@ -323,9 +336,17 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve React app for all other routes in production
+if (isProduction) {
+  app.get('*', (req, res) => {
+    res.sendFile(join(__dirname, '..', 'dist', 'index.html'));
+  });
+}
+
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`📊 API: http://0.0.0.0:${PORT}/api`);
-  console.log(`💚 Health: http://0.0.0.0:${PORT}/health\n`);
+  console.log(`💚 Health: http://0.0.0.0:${PORT}/health`);
+  console.log(`🌍 Mode: ${isProduction ? 'Production' : 'Development'}\n`);
 });
