@@ -21,7 +21,10 @@ app.use((req, res, next) => {
 });
 
 // Initialize database
-initDatabase();
+initDatabase().catch(err => {
+  console.error('❌ Database initialization failed:', err);
+  process.exit(1);
+});
 
 // ==================== API Routes ====================
 
