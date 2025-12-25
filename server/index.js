@@ -3,7 +3,7 @@ import cors from 'cors';
 import db, { initDatabase } from './database.js';
 
 const app = express();
-const PORT = 3001;
+const PORT = 3010;
 
 // Middleware
 app.use(cors());
