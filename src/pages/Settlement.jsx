@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export default function Settlement() {
   const [companies, setCompanies] = useState([]);
@@ -17,7 +17,7 @@ export default function Settlement() {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get('/api/settings/companies');
+      const response = await api.get('/api/settings/companies');
       setCompanies(response.data);
       if (response.data.length > 0) {
         setSelectedCompany(response.data[0].company_name);
@@ -35,7 +35,7 @@ export default function Settlement() {
 
     setLoading(true);
     try {
-      const response = await axios.get('/api/settlements/calculate', {
+      const response = await api.get('/api/settlements/calculate', {
         params: {
           clientCompany: selectedCompany,
           startDate: dateRange.start,

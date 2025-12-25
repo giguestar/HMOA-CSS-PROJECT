@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -11,7 +11,7 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('/api/dashboard/stats');
+      const response = await api.get('/api/dashboard/stats');
       setStats(response.data);
     } catch (error) {
       console.error('통계 조회 실패:', error);

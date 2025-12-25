@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 export default function RecordForm() {
   const { id } = useParams();
@@ -50,8 +50,8 @@ export default function RecordForm() {
   const fetchSettings = async () => {
     try {
       const [companiesRes, teamsRes] = await Promise.all([
-        axios.get('/api/settings/companies'),
-        axios.get('/api/settings/teams')
+        api.get('/api/settings/companies'),
+        api.get('/api/settings/teams')
       ]);
       setCompanies(companiesRes.data);
       setTeams(teamsRes.data);
@@ -62,7 +62,7 @@ export default function RecordForm() {
 
   const fetchRecord = async () => {
     try {
-      const response = await axios.get(`/api/records/${id}`);
+      const response = await api.get(`/api/records/${id}`);
       setFormData(response.data);
     } catch (error) {
       console.error('시공내역 조회 실패:', error);
@@ -106,10 +106,10 @@ export default function RecordForm() {
 
     try {
       if (id) {
-        await axios.put(`/api/records/${id}`, formData);
+        await api.put(`/api/records/${id}`, formData);
         alert('시공내역이 수정되었습니다.');
       } else {
-        await axios.post('/api/records', formData);
+        await api.post('/api/records', formData);
         alert('시공내역이 등록되었습니다.');
       }
       navigate('/records');

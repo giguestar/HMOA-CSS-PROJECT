@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 export default function RecordList() {
   const navigate = useNavigate();
@@ -24,8 +24,8 @@ export default function RecordList() {
   const fetchSettings = async () => {
     try {
       const [companiesRes, teamsRes] = await Promise.all([
-        axios.get('/api/settings/companies'),
-        axios.get('/api/settings/teams')
+        api.get('/api/settings/companies'),
+        api.get('/api/settings/teams')
       ]);
       setCompanies(companiesRes.data);
       setTeams(teamsRes.data);
@@ -43,7 +43,7 @@ export default function RecordList() {
       if (filters.clientCompany) params.append('clientCompany', filters.clientCompany);
       if (filters.team) params.append('team', filters.team);
 
-      const response = await axios.get(`/api/records?${params.toString()}`);
+      const response = await api.get(`/api/records?${params.toString()}`);
       setRecords(response.data);
     } catch (error) {
       console.error('시공내역 조회 실패:', error);
@@ -63,7 +63,7 @@ export default function RecordList() {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
     try {
-      await axios.delete(`/api/records/${id}`);
+      await api.delete(`/api/records/${id}`);
       alert('삭제되었습니다.');
       fetchRecords();
     } catch (error) {

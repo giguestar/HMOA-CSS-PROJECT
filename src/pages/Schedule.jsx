@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function Schedule() {
     try {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
-      const response = await axios.get(`/api/schedule/${year}/${month}`);
+      const response = await api.get(`/api/schedule/${year}/${month}`);
       setRecords(response.data);
     } catch (error) {
       console.error('스케줄 조회 실패:', error);
