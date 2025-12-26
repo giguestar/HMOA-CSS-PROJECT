@@ -34,10 +34,12 @@ if (isProduction) {
 }
 
 // Initialize database
-initDatabase().catch(err => {
+try {
+  initDatabase();
+} catch (err) {
   console.error('❌ Database initialization failed:', err);
   process.exit(1);
-});
+}
 
 // ==================== API Routes ====================
 

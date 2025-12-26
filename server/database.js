@@ -1,18 +1,17 @@
-import sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const sqlite3Verbose = sqlite3.verbose();
-const db = new sqlite3Verbose.Database(join(__dirname, 'construction.db'));
+const db = new Database(join(__dirname, 'construction.db'));
 
 // 데이터베이스 초기화
 export function initDatabase() {
-  return new Promise((resolve, reject) => {
+  try {
     // 1. 시공내역 테이블
-    db.run(`
+    db.exec(`
       CREATE TABLE IF NOT EXISTS construction_records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         construction_date TEXT NOT NULL,
@@ -68,97 +67,72 @@ export function initDatabase() {
         created_at TEXT DEFAULT (datetime('now', 'localtime')),
         updated_at TEXT DEFAULT (datetime('now', 'localtime'))
       )
-    `, (err) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+    `);
 
-      // 2. 부가작업 테이블
-      db.run(`
-        CREATE TABLE IF NOT EXISTS additional_works (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          record_id INTEGER NOT NULL,
-          work_type TEXT NOT NULL,
-          is_required BOOLEAN DEFAULT 0,
-          is_prepared BOOLEAN DEFAULT 0,
-          cost INTEGER DEFAULT 0,
-          notes TEXT,
-          FOREIGN KEY (record_id) REFERENCES construction_records(id) ON DELETE CASCADE
-        )
-      `, (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
+    // 2. 부가작업 테이블
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS additional_works (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        record_id INTEGER NOT NULL,
+        work_type TEXT NOT NULL,
+        is_required BOOLEAN DEFAULT 0,
+        is_prepared BOOLEAN DEFAULT 0,
+        cost INTEGER DEFAULT 0,
+        notes TEXT,
+        FOREIGN KEY (record_id) REFERENCES construction_records(id) ON DELETE CASCADE
+      )
+    `);
 
-        // 3. 정산 관리 테이블
-        db.run(`
-          CREATE TABLE IF NOT EXISTS settlements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            client_company TEXT NOT NULL,
-            settlement_period_start TEXT NOT NULL,
-            settlement_period_end TEXT NOT NULL,
-            settlement_due_date TEXT NOT NULL,
-            total_amount INTEGER DEFAULT 0,
-            payment_received BOOLEAN DEFAULT 0,
-            payment_date TEXT,
-            notes TEXT,
-            created_at TEXT DEFAULT (datetime('now', 'localtime'))
-          )
-        `, (err) => {
-          if (err) {
-            reject(err);
-            return;
-          }
+    // 3. 정산 관리 테이블
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS settlements (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_company TEXT NOT NULL,
+        settlement_period_start TEXT NOT NULL,
+        settlement_period_end TEXT NOT NULL,
+        settlement_due_date TEXT NOT NULL,
+        total_amount INTEGER DEFAULT 0,
+        payment_received BOOLEAN DEFAULT 0,
+        payment_date TEXT,
+        notes TEXT,
+        created_at TEXT DEFAULT (datetime('now', 'localtime'))
+      )
+    `);
 
-          // 4. 업체 설정 테이블
-          db.run(`
-            CREATE TABLE IF NOT EXISTS company_settings (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              company_name TEXT UNIQUE NOT NULL,
-              settlement_type TEXT NOT NULL,
-              color_code TEXT,
-              is_active BOOLEAN DEFAULT 1
-            )
-          `, (err) => {
-            if (err) {
-              reject(err);
-              return;
-            }
+    // 4. 업체 설정 테이블
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS company_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_name TEXT UNIQUE NOT NULL,
+        settlement_type TEXT NOT NULL,
+        color_code TEXT,
+        is_active BOOLEAN DEFAULT 1
+      )
+    `);
 
-            // 5. 시공팀 설정 테이블
-            db.run(`
-              CREATE TABLE IF NOT EXISTS team_settings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                team_name TEXT UNIQUE NOT NULL,
-                team_type TEXT NOT NULL,
-                payment_rate REAL DEFAULT 0.85,
-                is_active BOOLEAN DEFAULT 1
-              )
-            `, (err) => {
-              if (err) {
-                reject(err);
-                return;
-              }
+    // 5. 시공팀 설정 테이블
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS team_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        team_name TEXT UNIQUE NOT NULL,
+        team_type TEXT NOT NULL,
+        payment_rate REAL DEFAULT 0.85,
+        is_active BOOLEAN DEFAULT 1
+      )
+    `);
 
-              // 초기 데이터 삽입
-              insertInitialData()
-                .then(() => {
-                  console.log('✅ Database initialized successfully!');
-                  resolve();
-                })
-                .catch(reject);
-            });
-          });
-        });
-      });
-    });
-  });
+    // 초기 데이터 삽입
+    insertInitialData();
+    
+    console.log('✅ Database initialized successfully!');
+  } catch (error) {
+    console.error('❌ Database initialization error:', error);
+    throw error;
+  }
 }
 
 function insertInitialData() {
-  return new Promise((resolve, reject) => {
+  try {
     // 발주업체 초기 데이터
     const companies = [
       { name: 'LX', type: 'monthly_end', color: '#9333ea' },
@@ -169,42 +143,35 @@ function insertInitialData() {
       { name: '해모아', type: 'monthly_end', color: '#06b6d4' }
     ];
 
-    const companyPromises = companies.map(company => {
-      return new Promise((res, rej) => {
-        db.run(`
-          INSERT OR IGNORE INTO company_settings (company_name, settlement_type, color_code)
-          VALUES (?, ?, ?)
-        `, [company.name, company.type, company.color], (err) => {
-          if (err) rej(err);
-          else res();
-        });
-      });
-    });
+    const insertCompany = db.prepare(`
+      INSERT OR IGNORE INTO company_settings (company_name, settlement_type, color_code)
+      VALUES (?, ?, ?)
+    `);
+
+    for (const company of companies) {
+      insertCompany.run(company.name, company.type, company.color);
+    }
 
     // 시공팀 초기 데이터
     const teams = [
-      { name: '직영1', type: 'direct', rate: 1.0 },
-      { name: '직영2', type: 'direct', rate: 1.0 },
-      { name: '백X', type: 'outsource', rate: 0.85 },
-      { name: '손팀', type: 'outsource', rate: 0.85 }
+      { name: '직영', type: 'direct', rate: 1.0 },
+      { name: '손팀', type: 'outsource', rate: 0.85 },
+      { name: '백팀', type: 'outsource', rate: 0.85 },
+      { name: '기타', type: 'outsource', rate: 0.85 }
     ];
 
-    const teamPromises = teams.map(team => {
-      return new Promise((res, rej) => {
-        db.run(`
-          INSERT OR IGNORE INTO team_settings (team_name, team_type, payment_rate)
-          VALUES (?, ?, ?)
-        `, [team.name, team.type, team.rate], (err) => {
-          if (err) rej(err);
-          else res();
-        });
-      });
-    });
+    const insertTeam = db.prepare(`
+      INSERT OR IGNORE INTO team_settings (team_name, team_type, payment_rate)
+      VALUES (?, ?, ?)
+    `);
 
-    Promise.all([...companyPromises, ...teamPromises])
-      .then(resolve)
-      .catch(reject);
-  });
+    for (const team of teams) {
+      insertTeam.run(team.name, team.type, team.rate);
+    }
+  } catch (error) {
+    console.error('❌ Error inserting initial data:', error);
+    throw error;
+  }
 }
 
 export default db;

@@ -9,6 +9,14 @@ export default function RecordForm() {
   const [companies, setCompanies] = useState([]);
   const [teams, setTeams] = useState([]);
 
+  const [scheduleWorkTypes] = useState([
+    '난간대', '방범창', '몰딩', '타일', '롤망', '루버'
+  ]);
+
+  const [additionalWorkTypes] = useState([
+    '난간대', '방범창', '몰딩', '타일', '롤망', '루버', '기타'
+  ]);
+
   const [formData, setFormData] = useState({
     construction_date: new Date().toISOString().slice(0, 10),
     client_company: '',
@@ -33,12 +41,20 @@ export default function RecordForm() {
     actual_settlement: 0,
     
     remarks: '',
+    
+    // 스케줄 표기용 체크박스
+    scheduleWorks: {
+      난간대: false,
+      방범창: false,
+      몰딩: false,
+      타일: false,
+      롤망: false,
+      루버: false
+    },
+    
+    // 수기 작성용 부가작업
     additionalWorks: []
   });
-
-  const [additionalWorkTypes] = useState([
-    '난간대', '방범창', '롤망', '루버', '몰딩', '타일', '기타'
-  ]);
 
   useEffect(() => {
     fetchSettings();
@@ -78,10 +94,20 @@ export default function RecordForm() {
     }));
   };
 
+  const handleScheduleWorkChange = (workType) => {
+    setFormData(prev => ({
+      ...prev,
+      scheduleWorks: {
+        ...prev.scheduleWorks,
+        [workType]: !prev.scheduleWorks[workType]
+      }
+    }));
+  };
+
   const handleAddWork = () => {
     setFormData(prev => ({
       ...prev,
-      additionalWorks: [...prev.additionalWorks, { work_type: '', is_required: false, cost: 0, notes: '' }]
+      additionalWorks: [...prev.additionalWorks, { work_name: '', cost: 0, notes: '' }]
     }));
   };
 
