@@ -69,12 +69,12 @@ export default function Schedule() {
   };
 
   const companyColors = {
-    'LX': 'bg-purple-500 border-purple-600',
-    '케스코': 'bg-blue-500 border-blue-600',
-    '청암': 'bg-green-500 border-green-600',
-    '한샘': 'bg-orange-500 border-orange-600',
-    '홈CC': 'bg-red-500 border-red-600',
-    '해모아': 'bg-cyan-500 border-cyan-600',
+    'LX': '#8B1538',        // 붉은 자주색
+    '케스코': '#8B4513',    // 갈색
+    '청암': '#1E3A8A',      // 군청색
+    '한샘': '#16A34A',      // 녹색
+    '홈CC': '#F97316',      // 주황색
+    '해모아': '#6B7280',    // 회색
   };
 
   const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -124,14 +124,40 @@ export default function Schedule() {
 
       {/* 범례 */}
       <div className="bg-white rounded-lg shadow p-4">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">업체 구분</h3>
-        <div className="flex flex-wrap gap-3">
-          {Object.entries(companyColors).map(([company, colorClass]) => (
-            <div key={company} className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded ${colorClass}`}></div>
-              <span className="text-sm text-gray-700">{company}</span>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">📌 범례</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {/* 업체 색상 */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">업체 구분 (배경색)</p>
+            <div className="space-y-1">
+              {Object.entries(companyColors).map(([company, color]) => (
+                <div key={company} className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: color }}></div>
+                  <span className="text-xs text-gray-700">{company}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          
+          {/* 작업 표기 */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">작업 표기</p>
+            <div className="space-y-1">
+              <div className="text-xs"><span className="text-orange-600 font-semibold">주황색</span>: 난간대/방범창/롤망/루버</div>
+              <div className="text-xs"><span className="text-purple-600 font-semibold">보라색</span>: 몰딩/타일/몰+타</div>
+              <div className="text-xs"><span className="text-blue-600 font-semibold">파랑색</span>: 장비내용</div>
+            </div>
+          </div>
+          
+          {/* 팀/철거 표기 */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">팀/철거 표기</p>
+            <div className="space-y-1">
+              <div className="text-xs"><span className="text-green-600 font-semibold">녹색</span>: 시공팀</div>
+              <div className="text-xs"><span className="text-red-600 font-semibold">빨강색</span>: 철거팀</div>
+              <div className="text-xs"><span className="text-blue-500 font-semibold">"비"</span>: 비거주</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -184,31 +210,104 @@ export default function Schedule() {
                       </div>
 
                       {/* 시공 내역 */}
-                      <div className="space-y-1">
-                        {dayRecords.map((record) => (
-                          <div
-                            key={record.id}
-                            onClick={() => navigate(`/record/edit/${record.id}`)}
-                            className={`text-xs p-2 rounded border-l-4 ${companyColors[record.client_company] || 'bg-gray-200 border-gray-400'} bg-opacity-10 hover:bg-opacity-20 cursor-pointer transition-all`}
-                          >
-                            <div className="font-semibold text-gray-900 mb-1">
-                              {record.team} | {record.customer_name || '고객명 없음'}
-                            </div>
-                            <div className="text-gray-600 text-xs truncate">
-                              {record.building_unit}
-                            </div>
-                            {record.is_resident && (
-                              <div className="text-gray-500 text-xs mt-1">
-                                {record.is_resident}
+                      <div className="space-y-1.5">
+                        {dayRecords.map((record) => {
+                          const bgColor = companyColors[record.client_company] || '#9CA3AF';
+                          
+                          // 주소 파싱 (앞 2단어 / 아파트명 / 동호수)
+                          const addressParts = record.site_address ? record.site_address.split(' ') : [];
+                          const addressPrefix = addressParts.slice(0, 2).join(' ');
+                          const apartmentName = addressParts.slice(2).join(' ');
+                          
+                          // 시공팀 첫 글자
+                          const teamInitial = record.team ? record.team.charAt(0) : '';
+                          
+                          // 철거팀 표기
+                          let demolitionDisplay = '';
+                          if (record.demolition_team === '시공팀') {
+                            demolitionDisplay = teamInitial;
+                          } else if (record.demolition_team === '경산철거') {
+                            demolitionDisplay = '경';
+                          }
+                          
+                          // 장비 주체 표기
+                          const equipmentProvider = record.equipment_provider === '업체' ? '(업)' : '';
+                          
+                          // 부가작업 수집
+                          const orangeWorks = [];
+                          if (record.has_railing) orangeWorks.push('난간대');
+                          if (record.has_security_window) orangeWorks.push('방범창');
+                          if (record.has_roll_screen) orangeWorks.push('롤망');
+                          if (record.has_louver) orangeWorks.push('루버');
+                          
+                          const purpleWorks = [];
+                          if (record.has_molding) purpleWorks.push('몰딩');
+                          if (record.has_tile) purpleWorks.push('타일');
+                          if (record.has_molding_tile) purpleWorks.push('몰+타');
+                          
+                          return (
+                            <div
+                              key={record.id}
+                              onClick={() => navigate(`/record/edit/${record.id}`)}
+                              className="text-xs rounded-md shadow-sm hover:shadow-md cursor-pointer transition-all overflow-hidden"
+                              style={{ backgroundColor: bgColor + '20', borderLeft: `4px solid ${bgColor}` }}
+                            >
+                              {/* 첫 줄: 대리점 | 고객명 | 주소 | 비거주 */}
+                              <div className="px-2 py-1.5 font-medium text-gray-900" style={{ backgroundColor: bgColor + '15' }}>
+                                <div className="flex items-center justify-between gap-1">
+                                  <div className="flex items-center gap-1 flex-1 min-w-0">
+                                    <span className="font-bold whitespace-nowrap">{record.client_company}</span>
+                                    <span className="text-gray-600">|</span>
+                                    <span className="whitespace-nowrap">{record.customer_name || '고객명 없음'}</span>
+                                    <span className="text-gray-600">|</span>
+                                    <span className="truncate text-gray-700">
+                                      {addressPrefix} / {apartmentName} / {record.building_unit}
+                                    </span>
+                                  </div>
+                                  {record.is_resident === '비거주' && (
+                                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                      <span className="text-white text-xs font-bold">비</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* 주황색 부가작업 */}
+                                {orangeWorks.length > 0 && (
+                                  <div className="mt-1 text-orange-600 font-semibold">
+                                    {orangeWorks.join(' ')}
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {record.additional_work_types && (
-                              <div className="text-purple-600 text-xs mt-1 font-medium">
-                                🔧 {record.additional_work_types}
+                              
+                              {/* 둘째 줄: 시공팀 | 철거팀 | 장비주체 | 장비내용 */}
+                              <div className="px-2 py-1 text-gray-700 flex items-center gap-1.5 flex-wrap">
+                                <span className="text-green-600 font-bold">{teamInitial}</span>
+                                <span className="text-gray-400">|</span>
+                                <span className="text-red-600 font-bold">{demolitionDisplay}</span>
+                                {equipmentProvider && (
+                                  <>
+                                    <span className="text-gray-400">|</span>
+                                    <span className="text-gray-700 font-medium">{equipmentProvider}</span>
+                                  </>
+                                )}
+                                {record.equipment_desc && (
+                                  <>
+                                    <span className="text-gray-400">|</span>
+                                    <span className="text-blue-600">{record.equipment_desc}</span>
+                                  </>
+                                )}
+                                
+                                {/* 보라색 작업 (몰딩, 타일) */}
+                                {purpleWorks.length > 0 && (
+                                  <>
+                                    <span className="text-gray-400">|</span>
+                                    <span className="text-purple-600 font-semibold">{purpleWorks.join(' ')}</span>
+                                  </>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     </>
                   )}

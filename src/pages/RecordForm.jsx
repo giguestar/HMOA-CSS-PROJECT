@@ -34,7 +34,18 @@ export default function RecordForm() {
     demolition_cost: 0,
     equipment_desc: '',
     equipment_cost: 0,
+    equipment_provider: '직영',
+    demolition_team: '시공팀',
     measurement_cost: 0,
+    
+    // 스케줄 표기용 체크박스
+    has_railing: false,
+    has_security_window: false,
+    has_roll_screen: false,
+    has_louver: false,
+    has_molding: false,
+    has_tile: false,
+    has_molding_tile: false,
     
     // 지급 금액 (청구와 다를 경우만 입력)
     outsource_total_cost: 0,
@@ -42,17 +53,7 @@ export default function RecordForm() {
     
     remarks: '',
     
-    // 스케줄 표기용 체크박스
-    scheduleWorks: {
-      난간대: false,
-      방범창: false,
-      몰딩: false,
-      타일: false,
-      롤망: false,
-      루버: false
-    },
-    
-    // 수기 작성용 부가작업
+    // 일반 부가작업 (기타 작업들)
     additionalWorks: []
   });
 
@@ -87,20 +88,10 @@ export default function RecordForm() {
   };
 
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? (value === '' ? 0 : parseInt(value)) : value
-    }));
-  };
-
-  const handleScheduleWorkChange = (workType) => {
-    setFormData(prev => ({
-      ...prev,
-      scheduleWorks: {
-        ...prev.scheduleWorks,
-        [workType]: !prev.scheduleWorks[workType]
-      }
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? (value === '' ? 0 : parseInt(value)) : value)
     }));
   };
 
@@ -374,6 +365,32 @@ export default function RecordForm() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">장비 주체</label>
+                <select
+                  name="equipment_provider"
+                  value={formData.equipment_provider}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="직영">직영</option>
+                  <option value="업체">업체</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">철거팀</label>
+                <select
+                  name="demolition_team"
+                  value={formData.demolition_team}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="시공팀">시공팀</option>
+                  <option value="경산철거">경산철거</option>
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">실측비</label>
                 <input
                   type="number"
@@ -459,10 +476,100 @@ export default function RecordForm() {
             </div>
           </section>
 
-          {/* 부가작업 */}
+          {/* 스케줄 표기 작업 */}
+          <section className="border-b pb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">📋 스케줄 표기 작업</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              체크한 항목은 스케줄표에 색상으로 표기됩니다.
+            </p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
+                <input
+                  type="checkbox"
+                  name="has_railing"
+                  checked={formData.has_railing}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-orange-700 font-medium">난간대</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
+                <input
+                  type="checkbox"
+                  name="has_security_window"
+                  checked={formData.has_security_window}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-orange-700 font-medium">방범창</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
+                <input
+                  type="checkbox"
+                  name="has_roll_screen"
+                  checked={formData.has_roll_screen}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-orange-700 font-medium">롤망</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
+                <input
+                  type="checkbox"
+                  name="has_louver"
+                  checked={formData.has_louver}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-orange-700 font-medium">루버</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
+                <input
+                  type="checkbox"
+                  name="has_molding"
+                  checked={formData.has_molding}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-purple-700 font-medium">몰딩</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
+                <input
+                  type="checkbox"
+                  name="has_tile"
+                  checked={formData.has_tile}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-purple-700 font-medium">타일</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
+                <input
+                  type="checkbox"
+                  name="has_molding_tile"
+                  checked={formData.has_molding_tile}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-purple-700 font-medium">몰+타</span>
+              </label>
+            </div>
+          </section>
+
+          {/* 기타 부가작업 */}
           <section className="border-b pb-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">🔧 부가작업 (난간대, 방범창 등)</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">🔧 기타 부가작업</h2>
+                <p className="text-sm text-gray-600">스케줄에 표기되지 않는 내역용 부가작업</p>
+              </div>
               <button
                 type="button"
                 onClick={handleAddWork}
@@ -476,26 +583,13 @@ export default function RecordForm() {
               <div className="space-y-3">
                 {formData.additionalWorks.map((work, index) => (
                   <div key={index} className="flex items-start gap-2 bg-gray-50 p-3 rounded-md">
-                    <select
+                    <input
+                      type="text"
                       value={work.work_type}
                       onChange={(e) => handleWorkChange(index, 'work_type', e.target.value)}
+                      placeholder="작업명"
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">작업 유형 선택</option>
-                      {additionalWorkTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-
-                    <label className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md">
-                      <input
-                        type="checkbox"
-                        checked={work.is_required}
-                        onChange={(e) => handleWorkChange(index, 'is_required', e.target.checked)}
-                        className="mr-2"
-                      />
-                      <span className="text-sm">필수제작</span>
-                    </label>
+                    />
 
                     <input
                       type="number"
@@ -525,7 +619,7 @@ export default function RecordForm() {
               </div>
             ) : (
               <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-md">
-                부가작업이 없습니다. 필요시 추가 버튼을 눌러주세요.
+                기타 부가작업이 없습니다. 필요시 추가 버튼을 눌러주세요.
               </div>
             )}
           </section>

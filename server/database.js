@@ -33,6 +33,17 @@ export function initDatabase() {
         demolition_cost INTEGER DEFAULT 0,
         equipment_desc TEXT,
         equipment_cost INTEGER DEFAULT 0,
+        equipment_provider TEXT DEFAULT '직영',
+        demolition_team TEXT DEFAULT '시공팀',
+        
+        -- 스케줄 표기용 체크박스
+        has_railing BOOLEAN DEFAULT 0,
+        has_security_window BOOLEAN DEFAULT 0,
+        has_roll_screen BOOLEAN DEFAULT 0,
+        has_louver BOOLEAN DEFAULT 0,
+        has_molding BOOLEAN DEFAULT 0,
+        has_tile BOOLEAN DEFAULT 0,
+        has_molding_tile BOOLEAN DEFAULT 0,
         crane_cost INTEGER DEFAULT 0,
         ladder_jg_cost INTEGER DEFAULT 0,
         ladder_partner_cost INTEGER DEFAULT 0,
@@ -121,6 +132,18 @@ export function initDatabase() {
       )
     `);
 
+    // 6. 달력 노트 테이블 (휴가자, 일당, 쉬는 팀)
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS calendar_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        note_date TEXT NOT NULL,
+        vacation_members TEXT,
+        daily_workers TEXT,
+        off_teams TEXT,
+        created_at TEXT DEFAULT (datetime('now', 'localtime'))
+      )
+    `);
+
     // 초기 데이터 삽입
     insertInitialData();
     
@@ -135,12 +158,12 @@ function insertInitialData() {
   try {
     // 발주업체 초기 데이터
     const companies = [
-      { name: 'LX', type: 'monthly_end', color: '#9333ea' },
-      { name: '케스코', type: 'bimonthly', color: '#3b82f6' },
-      { name: '청암', type: 'bimonthly_custom', color: '#10b981' },
-      { name: '한샘', type: 'monthly_end', color: '#f59e0b' },
-      { name: '홈CC', type: 'monthly_end', color: '#ef4444' },
-      { name: '해모아', type: 'monthly_end', color: '#06b6d4' }
+      { name: 'LX', type: 'monthly_end', color: '#8B1538' },        // 붉은 자주색
+      { name: '케스코', type: 'bimonthly', color: '#8B4513' },      // 갈색
+      { name: '청암', type: 'bimonthly_custom', color: '#1E3A8A' }, // 군청색
+      { name: '한샘', type: 'monthly_end', color: '#16A34A' },      // 녹색
+      { name: '홈CC', type: 'monthly_end', color: '#F97316' },      // 주황색
+      { name: '해모아', type: 'monthly_end', color: '#6B7280' }     // 회색
     ];
 
     const insertCompany = db.prepare(`

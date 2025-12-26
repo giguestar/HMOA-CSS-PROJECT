@@ -106,9 +106,11 @@ app.post('/api/records', (req, res) => {
         construction_date, client_company, customer_name, special_notes,
         is_resident, site_address, building_unit, team, settlement_status,
         standard_cost, protection_cost, demolition_qty, demolition_cost,
-        equipment_desc, equipment_cost, measurement_cost,
+        equipment_desc, equipment_cost, equipment_provider, demolition_team, measurement_cost,
+        has_railing, has_security_window, has_roll_screen, has_louver,
+        has_molding, has_tile, has_molding_tile,
         outsource_total_cost, actual_settlement, remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insert.run(
@@ -127,7 +129,16 @@ app.post('/api/records', (req, res) => {
       data.demolition_cost || 0,
       data.equipment_desc,
       data.equipment_cost || 0,
+      data.equipment_provider || '직영',
+      data.demolition_team || '시공팀',
       data.measurement_cost || 0,
+      data.has_railing ? 1 : 0,
+      data.has_security_window ? 1 : 0,
+      data.has_roll_screen ? 1 : 0,
+      data.has_louver ? 1 : 0,
+      data.has_molding ? 1 : 0,
+      data.has_tile ? 1 : 0,
+      data.has_molding_tile ? 1 : 0,
       data.outsource_total_cost || 0,
       data.actual_settlement || 0,
       data.remarks
@@ -163,7 +174,10 @@ app.put('/api/records/:id', (req, res) => {
         building_unit = ?, team = ?, settlement_status = ?,
         standard_cost = ?, protection_cost = ?, demolition_qty = ?,
         demolition_cost = ?, equipment_desc = ?, equipment_cost = ?,
-        measurement_cost = ?, outsource_total_cost = ?, actual_settlement = ?,
+        equipment_provider = ?, demolition_team = ?, measurement_cost = ?,
+        has_railing = ?, has_security_window = ?, has_roll_screen = ?, has_louver = ?,
+        has_molding = ?, has_tile = ?, has_molding_tile = ?,
+        outsource_total_cost = ?, actual_settlement = ?,
         remarks = ?, updated_at = datetime('now', 'localtime')
       WHERE id = ?
     `);
@@ -184,7 +198,16 @@ app.put('/api/records/:id', (req, res) => {
       data.demolition_cost || 0,
       data.equipment_desc,
       data.equipment_cost || 0,
+      data.equipment_provider || '직영',
+      data.demolition_team || '시공팀',
       data.measurement_cost || 0,
+      data.has_railing ? 1 : 0,
+      data.has_security_window ? 1 : 0,
+      data.has_roll_screen ? 1 : 0,
+      data.has_louver ? 1 : 0,
+      data.has_molding ? 1 : 0,
+      data.has_tile ? 1 : 0,
+      data.has_molding_tile ? 1 : 0,
       data.outsource_total_cost || 0,
       data.actual_settlement || 0,
       data.remarks,
@@ -230,12 +253,9 @@ app.get('/api/schedule/:year/:month', (req, res) => {
     const endDate = `${year}-${month.padStart(2, '0')}-31`;
 
     const records = db.prepare(`
-      SELECT r.*, 
-        GROUP_CONCAT(a.work_type, ', ') as additional_work_types
+      SELECT r.*
       FROM construction_records r
-      LEFT JOIN additional_works a ON r.id = a.record_id AND a.is_required = 1
       WHERE r.construction_date >= ? AND r.construction_date <= ?
-      GROUP BY r.id
       ORDER BY r.construction_date
     `).all(startDate, endDate);
 
