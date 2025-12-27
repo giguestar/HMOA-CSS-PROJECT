@@ -426,6 +426,203 @@ app.get('/api/dashboard/stats', (req, res) => {
   }
 });
 
+// 6. 실측 관리 API
+// 실측 요청 전체 조회
+app.get('/api/measurements', (req, res) => {
+  try {
+    const { status, manager, priority, startDate, endDate } = req.query;
+    
+    let query = 'SELECT * FROM measurement_requests WHERE 1=1';
+    const params = [];
+
+    if (status) {
+      query += ' AND status = ?';
+      params.push(status);
+    }
+    if (manager) {
+      query += ' AND assigned_manager = ?';
+      params.push(manager);
+    }
+    if (priority) {
+      query += ' AND priority = ?';
+      params.push(priority);
+    }
+    if (startDate) {
+      query += ' AND request_date >= ?';
+      params.push(startDate);
+    }
+    if (endDate) {
+      query += ' AND request_date <= ?';
+      params.push(endDate);
+    }
+
+    query += ' ORDER BY request_date DESC, priority DESC';
+
+    const measurements = db.prepare(query).all(...params);
+    res.json(measurements);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 실측 요청 단건 조회
+app.get('/api/measurements/:id', (req, res) => {
+  try {
+    const measurement = db.prepare('SELECT * FROM measurement_requests WHERE id = ?').get(req.params.id);
+    
+    if (!measurement) {
+      return res.status(404).json({ error: '실측 요청을 찾을 수 없습니다.' });
+    }
+
+    res.json(measurement);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 실측 요청 생성
+app.post('/api/measurements', (req, res) => {
+  try {
+    const data = req.body;
+    
+    const insert = db.prepare(`
+      INSERT INTO measurement_requests (
+        client_company, customer_name, customer_phone, site_address, address_detail,
+        request_date, scheduled_measurement_date, scheduled_measurement_time, assigned_manager,
+        priority, status, desired_construction_date, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const result = insert.run(
+      data.client_company,
+      data.customer_name,
+      data.customer_phone || '',
+      data.site_address,
+      data.address_detail || '',
+      data.request_date,
+      data.scheduled_measurement_date || null,
+      data.scheduled_measurement_time || '',
+      data.assigned_manager || '',
+      data.priority || 'normal',
+      data.status || 'pending',
+      data.desired_construction_date || null,
+      data.notes || ''
+    );
+
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    console.error('❌ 실측 요청 등록 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 실측 요청 수정
+app.put('/api/measurements/:id', (req, res) => {
+  try {
+    const data = req.body;
+    
+    const update = db.prepare(`
+      UPDATE measurement_requests SET
+        client_company = ?, customer_name = ?, customer_phone = ?,
+        site_address = ?, address_detail = ?, request_date = ?,
+        scheduled_measurement_date = ?, actual_measurement_date = ?,
+        scheduled_measurement_time = ?, assigned_manager = ?,
+        priority = ?, status = ?, desired_construction_date = ?,
+        confirmed_construction_date = ?, notes = ?, measurement_photo_url = ?,
+        updated_at = datetime('now', 'localtime')
+      WHERE id = ?
+    `);
+
+    update.run(
+      data.client_company,
+      data.customer_name,
+      data.customer_phone || '',
+      data.site_address,
+      data.address_detail || '',
+      data.request_date,
+      data.scheduled_measurement_date || null,
+      data.actual_measurement_date || null,
+      data.scheduled_measurement_time || '',
+      data.assigned_manager || '',
+      data.priority || 'normal',
+      data.status || 'pending',
+      data.desired_construction_date || null,
+      data.confirmed_construction_date || null,
+      data.notes || '',
+      data.measurement_photo_url || '',
+      req.params.id
+    );
+
+    // 시공일이 확정된 경우 자동으로 시공 스케줄에 추가
+    if (data.confirmed_construction_date && data.status === 'scheduled') {
+      // 이미 시공 등록이 있는지 확인
+      const existingRecord = db.prepare(
+        'SELECT id FROM construction_records WHERE customer_name = ? AND construction_date = ?'
+      ).get(data.customer_name, data.confirmed_construction_date);
+
+      if (!existingRecord) {
+        // 시공 스케줄에 자동 추가 (기본 정보만)
+        const insertConstruction = db.prepare(`
+          INSERT INTO construction_records (
+            construction_date, client_company, customer_name, customer_phone,
+            site_address, address_detail, special_notes, settlement_status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        insertConstruction.run(
+          data.confirmed_construction_date,
+          data.client_company,
+          data.customer_name,
+          data.customer_phone || '',
+          data.site_address,
+          data.address_detail || '',
+          `실측에서 자동 등록 (실측ID: ${req.params.id})`,
+          '시공 예정'
+        );
+
+        console.log(`✅ 시공일 ${data.confirmed_construction_date} 자동 등록 완료`);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 실측 요청 수정 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 실측 요청 삭제
+app.delete('/api/measurements/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM measurement_requests WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 월별 실측 스케줄 조회
+app.get('/api/measurements/schedule/:year/:month', (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const endDate = `${year}-${month.padStart(2, '0')}-31`;
+
+    const measurements = db.prepare(`
+      SELECT *
+      FROM measurement_requests
+      WHERE (scheduled_measurement_date >= ? AND scheduled_measurement_date <= ?)
+         OR (actual_measurement_date >= ? AND actual_measurement_date <= ?)
+         OR (request_date >= ? AND request_date <= ?)
+      ORDER BY scheduled_measurement_date, request_date
+    `).all(startDate, endDate, startDate, endDate, startDate, endDate);
+
+    res.json(measurements);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

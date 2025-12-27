@@ -148,6 +148,31 @@ export function initDatabase() {
       )
     `);
 
+    // 7. 실측 요청 테이블
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS measurement_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_company TEXT NOT NULL,
+        customer_name TEXT NOT NULL,
+        customer_phone TEXT,
+        site_address TEXT NOT NULL,
+        address_detail TEXT,
+        request_date TEXT NOT NULL,
+        scheduled_measurement_date TEXT,
+        scheduled_measurement_time TEXT,
+        actual_measurement_date TEXT,
+        assigned_manager TEXT,
+        priority TEXT DEFAULT 'normal',
+        status TEXT DEFAULT 'pending',
+        desired_construction_date TEXT,
+        confirmed_construction_date TEXT,
+        notes TEXT,
+        measurement_photo_url TEXT,
+        created_at TEXT DEFAULT (datetime('now', 'localtime')),
+        updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+      )
+    `);
+
     // 초기 데이터 삽입
     insertInitialData();
     
