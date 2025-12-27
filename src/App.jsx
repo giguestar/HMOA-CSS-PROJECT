@@ -7,6 +7,7 @@ import Schedule from './pages/Schedule';
 import Settlement from './pages/Settlement';
 import MeasurementForm from './pages/MeasurementForm';
 import MeasurementList from './pages/MeasurementList';
+import MeasurementSchedule from './pages/MeasurementSchedule';
 import LoginModal from './components/LoginModal';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
   const allNavigation = [
     { name: '대시보드', path: '/', icon: '📊', roles: ['admin', 'viewer'] },
     { name: '실측 관리', path: '/measurements', icon: '📏', roles: ['admin'] },
+    { name: '실측 달력', path: '/measurement-schedule', icon: '📆', roles: ['admin', 'viewer'] },
     { name: '시공내역 등록', path: '/record/new', icon: '✏️', roles: ['admin'] },
     { name: '시공내역 조회', path: '/records', icon: '📋', roles: ['admin'] },
     { name: '월간 스케줄', path: '/schedule', icon: '📅', roles: ['admin', 'viewer'] },
@@ -112,6 +114,7 @@ function App() {
                 <Route path="/settlement" element={<Settlement />} />
               </>
             )}
+            <Route path="/measurement-schedule" element={<MeasurementSchedule userRole={userRole} />} />
             <Route path="/schedule" element={<Schedule userRole={userRole} />} />
           </Routes>
         </main>

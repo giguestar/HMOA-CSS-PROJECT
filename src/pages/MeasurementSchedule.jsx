@@ -1,0 +1,472 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
+
+export default function MeasurementSchedule() {
+  const navigate = useNavigate();
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [measurements, setMeasurements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedMeasurement, setSelectedMeasurement] = useState(null);
+
+  useEffect(() => {
+    fetchMeasurements();
+  }, [currentDate]);
+
+  const fetchMeasurements = async () => {
+    setLoading(true);
+    try {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1;
+      const response = await api.get(`/api/measurements/schedule/${year}/${month}`);
+      setMeasurements(response.data);
+    } catch (error) {
+      console.error('실측 스케줄 조회 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDaysInMonth = () => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+    
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    return days;
+  };
+
+  const getMeasurementsForDate = (day) => {
+    if (!day) return [];
+    
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return measurements.filter(m => 
+      m.scheduled_measurement_date === dateStr || 
+      m.actual_measurement_date === dateStr ||
+      m.request_date === dateStr
+    );
+  };
+
+  const prevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+  };
+
+  const managerColors = {
+    '이상무': '#3B82F6', // 파란색
+    '정호규': '#10B981', // 녹색
+    '김남군': '#F59E0B', // 주황색
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pending': return '#9CA3AF'; // 회색
+      case 'measured': return '#3B82F6'; // 파란색
+      case 'scheduled': return '#10B981'; // 녹색
+      case 'registered': return '#8B5CF6'; // 보라색
+      default: return '#9CA3AF';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'pending': return '대기';
+      case 'measured': return '완료';
+      case 'scheduled': return '확정';
+      case 'registered': return '등록';
+      default: return status;
+    }
+  };
+
+  const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+  const days = getDaysInMonth();
+
+  const isToday = (day) => {
+    if (!day) return false;
+    const today = new Date();
+    return (
+      day === today.getDate() &&
+      currentDate.getMonth() === today.getMonth() &&
+      currentDate.getFullYear() === today.getFullYear()
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">실측 스케줄 달력</h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={goToToday}
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            오늘
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={prevMonth}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              ◀
+            </button>
+            <span className="text-xl font-semibold min-w-[180px] text-center">
+              {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
+            </span>
+            <button
+              onClick={nextMonth}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              ▶
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 범례 */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">📌 범례</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {/* 매니저별 색상 */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">담당 매니저</p>
+            <div className="space-y-1">
+              {Object.entries(managerColors).map(([manager, color]) => (
+                <div key={manager} className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: color }}></div>
+                  <span className="text-xs text-gray-700">{manager}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* 상태별 표기 */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">진행 상태</p>
+            <div className="space-y-1">
+              <div className="text-xs"><span className="text-gray-600">⚪</span> 대기: 실측 대기중</div>
+              <div className="text-xs"><span className="text-blue-600">🔵</span> 완료: 실측 완료</div>
+              <div className="text-xs"><span className="text-green-600">🟢</span> 확정: 시공일 확정</div>
+              <div className="text-xs"><span className="text-purple-600">🟣</span> 등록: 시공등록 완료</div>
+            </div>
+          </div>
+          
+          {/* 우선순위 */}
+          <div>
+            <p className="text-xs font-medium text-gray-600 mb-2">우선순위</p>
+            <div className="space-y-1">
+              <div className="text-xs"><span className="text-red-600 font-bold">★★★</span> 긴급</div>
+              <div className="text-xs"><span className="text-yellow-600 font-bold">★★</span> 보통</div>
+              <div className="text-xs"><span className="text-green-600 font-bold">★</span> 낮음</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center h-96 bg-white rounded-lg shadow">
+          <div className="text-lg text-gray-600">로딩 중...</div>
+        </div>
+      ) : (
+        /* 캘린더 */
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          {/* 요일 헤더 */}
+          <div className="grid grid-cols-7 bg-gray-100 border-b">
+            {weekDays.map((day, index) => (
+              <div
+                key={day}
+                className={`py-3 text-center font-semibold text-sm ${
+                  index === 0 ? 'text-red-600' : index === 6 ? 'text-blue-600' : 'text-gray-700'
+                }`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* 날짜 그리드 */}
+          <div className="grid grid-cols-7 auto-rows-fr">
+            {days.map((day, index) => {
+              const dayMeasurements = getMeasurementsForDate(day);
+              const isWeekend = index % 7 === 0 || index % 7 === 6;
+
+              return (
+                <div
+                  key={index}
+                  className={`min-h-[120px] border-r border-b p-2 ${
+                    !day ? 'bg-gray-50' : ''
+                  } ${isToday(day) ? 'bg-yellow-50' : ''}`}
+                >
+                  {day && (
+                    <>
+                      <div className={`text-sm font-semibold mb-2 ${
+                        isToday(day) 
+                          ? 'bg-yellow-500 text-white rounded-full w-7 h-7 flex items-center justify-center' 
+                          : index % 7 === 0 
+                            ? 'text-red-600' 
+                            : index % 7 === 6 
+                              ? 'text-blue-600' 
+                              : 'text-gray-700'
+                      }`}>
+                        {day}
+                      </div>
+
+                      {/* 실측 내역 */}
+                      <div className="space-y-1">
+                        {dayMeasurements.map((measurement) => {
+                          const managerColor = managerColors[measurement.assigned_manager] || '#9CA3AF';
+                          const statusColor = getStatusColor(measurement.status);
+                          const isPriority = measurement.priority === 'urgent';
+                          
+                          return (
+                            <div
+                              key={measurement.id}
+                              onClick={() => setSelectedMeasurement(measurement)}
+                              className="text-xs rounded-md p-1.5 cursor-pointer transition-all hover:shadow-md"
+                              style={{ 
+                                backgroundColor: `${managerColor}15`,
+                                borderLeft: `3px solid ${managerColor}`
+                              }}
+                            >
+                              {/* 첫 줄: 대리점 + 고객명 + 우선순위 */}
+                              <div className="flex items-center justify-between gap-1 mb-0.5">
+                                <div className="flex items-center gap-1 flex-1 min-w-0">
+                                  <span className="font-bold text-gray-900">{measurement.client_company}</span>
+                                  <span className="text-gray-500">|</span>
+                                  <span className="text-gray-700 truncate">{measurement.customer_name}</span>
+                                </div>
+                                {isPriority && (
+                                  <span className="text-red-600 font-bold text-[10px]">★★★</span>
+                                )}
+                              </div>
+                              
+                              {/* 둘째 줄: 주소 */}
+                              <div className="text-gray-600 text-[10px] truncate mb-0.5">
+                                {measurement.site_address}
+                              </div>
+                              
+                              {/* 셋째 줄: 매니저 + 시간 + 상태 */}
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex items-center gap-1">
+                                  <span 
+                                    className="text-white font-semibold text-[9px] px-1.5 py-0.5 rounded"
+                                    style={{ backgroundColor: managerColor }}
+                                  >
+                                    {measurement.assigned_manager || '미배정'}
+                                  </span>
+                                  {measurement.scheduled_measurement_time && (
+                                    <span className="text-gray-600 text-[9px]">
+                                      {measurement.scheduled_measurement_time}
+                                    </span>
+                                  )}
+                                </div>
+                                <span 
+                                  className="text-white font-semibold text-[9px] px-1.5 py-0.5 rounded"
+                                  style={{ backgroundColor: statusColor }}
+                                >
+                                  {getStatusLabel(measurement.status)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 상세 정보 모달 */}
+      {selectedMeasurement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">실측 상세 정보</h2>
+              <button
+                onClick={() => setSelectedMeasurement(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* 기본 정보 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">대리점</p>
+                  <p className="text-base font-semibold">{selectedMeasurement.client_company}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">고객명</p>
+                  <p className="text-base font-semibold">{selectedMeasurement.customer_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">연락처</p>
+                  <p className="text-base">{selectedMeasurement.customer_phone || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">실측 오더일</p>
+                  <p className="text-base">{selectedMeasurement.request_date}</p>
+                </div>
+              </div>
+
+              {/* 주소 */}
+              <div>
+                <p className="text-sm text-gray-600">주소</p>
+                <p className="text-base font-medium">{selectedMeasurement.site_address}</p>
+                {selectedMeasurement.address_detail && (
+                  <p className="text-sm text-gray-600">{selectedMeasurement.address_detail}</p>
+                )}
+              </div>
+
+              {/* 실측 정보 */}
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                <div>
+                  <p className="text-sm text-gray-600">담당 매니저</p>
+                  <p className="text-base font-semibold">{selectedMeasurement.assigned_manager || '미배정'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">실측 예정일</p>
+                  <p className="text-base">
+                    {selectedMeasurement.scheduled_measurement_date || '-'}
+                    {selectedMeasurement.scheduled_measurement_time && 
+                      <span className="text-sm text-gray-600 ml-2">{selectedMeasurement.scheduled_measurement_time}</span>
+                    }
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">실측 완료일</p>
+                  <p className="text-base">{selectedMeasurement.actual_measurement_date || '미완료'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">진행 상태</p>
+                  <span 
+                    className="inline-block px-3 py-1 rounded-full text-sm font-medium text-white"
+                    style={{ backgroundColor: getStatusColor(selectedMeasurement.status) }}
+                  >
+                    {getStatusLabel(selectedMeasurement.status)}
+                  </span>
+                </div>
+              </div>
+
+              {/* 시공일 정보 */}
+              {(selectedMeasurement.desired_construction_date || selectedMeasurement.confirmed_construction_date) && (
+                <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                  <div>
+                    <p className="text-sm text-gray-600">고객 희망 시공일</p>
+                    <p className="text-base">{selectedMeasurement.desired_construction_date || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">확정 시공일</p>
+                    <p className="text-base font-bold text-green-600">
+                      {selectedMeasurement.confirmed_construction_date || '-'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* 특이사항 */}
+              {selectedMeasurement.notes && (
+                <div className="border-t pt-4">
+                  <p className="text-sm text-gray-600 mb-2">특이사항</p>
+                  <p className="text-base bg-gray-50 p-3 rounded-md">{selectedMeasurement.notes}</p>
+                </div>
+              )}
+
+              {/* 버튼 */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setSelectedMeasurement(null);
+                    navigate(`/measurements/edit/${selectedMeasurement.id}`);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  수정하기
+                </button>
+                <button
+                  onClick={() => setSelectedMeasurement(null)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 통계 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">이번 달 실측 건수</h3>
+          <p className="text-3xl font-bold text-gray-900">{measurements.length}건</p>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">매니저별 분포</h3>
+          <div className="space-y-1">
+            {Object.entries(
+              measurements.reduce((acc, m) => {
+                const manager = m.assigned_manager || '미배정';
+                acc[manager] = (acc[manager] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([manager, count]) => (
+              <div key={manager} className="flex justify-between text-sm">
+                <span className="text-gray-700">{manager}</span>
+                <span className="font-semibold text-gray-900">{count}건</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="text-sm font-medium text-gray-600 mb-2">상태별 분포</h3>
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-700">실측 대기</span>
+              <span className="font-semibold text-gray-900">
+                {measurements.filter(m => m.status === 'pending').length}건
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-700">실측 완료</span>
+              <span className="font-semibold text-blue-600">
+                {measurements.filter(m => m.status === 'measured').length}건
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-700">시공일 확정</span>
+              <span className="font-semibold text-green-600">
+                {measurements.filter(m => m.status === 'scheduled').length}건
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
