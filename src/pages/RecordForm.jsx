@@ -21,10 +21,13 @@ export default function RecordForm() {
     construction_date: new Date().toISOString().slice(0, 10),
     client_company: '',
     customer_name: '',
+    customer_phone: '',
     special_notes: '',
     is_resident: '거주',
     site_address: '',
+    site_detail: '',
     building_unit: '',
+    frame_count: 0,
     team: '',
     
     // 청구 금액
@@ -46,6 +49,7 @@ export default function RecordForm() {
     has_molding: false,
     has_tile: false,
     has_molding_tile: false,
+    needs_fabrication: false,
     
     // 지급 금액 (청구와 다를 경우만 입력)
     outsource_total_cost: 0,
@@ -89,6 +93,22 @@ export default function RecordForm() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // 전화번호 자동 하이픈 처리
+    if (name === 'customer_phone') {
+      const cleaned = value.replace(/[^0-9]/g, '');
+      let formatted = cleaned;
+      if (cleaned.length <= 3) {
+        formatted = cleaned;
+      } else if (cleaned.length <= 7) {
+        formatted = cleaned.slice(0, 3) + '-' + cleaned.slice(3);
+      } else if (cleaned.length <= 11) {
+        formatted = cleaned.slice(0, 3) + '-' + cleaned.slice(3, 7) + '-' + cleaned.slice(7);
+      }
+      setFormData(prev => ({ ...prev, [name]: formatted }));
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : (type === 'number' ? (value === '' ? 0 : parseInt(value)) : value)
@@ -98,7 +118,7 @@ export default function RecordForm() {
   const handleAddWork = () => {
     setFormData(prev => ({
       ...prev,
-      additionalWorks: [...prev.additionalWorks, { work_name: '', cost: 0, notes: '' }]
+      additionalWorks: [...prev.additionalWorks, { work_type: '', cost: 0, notes: '' }]
     }));
   };
 
@@ -170,16 +190,16 @@ export default function RecordForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  시공일 <span className="text-red-500">*</span>
+                  시공일 <span className="text-gray-400">(선택사항 - 미정 가능)</span>
                 </label>
                 <input
                   type="date"
                   name="construction_date"
                   value={formData.construction_date}
                   onChange={handleChange}
-                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">비워두면 "시공일 미정"으로 등록됩니다</p>
               </div>
 
               <div>
@@ -209,22 +229,36 @@ export default function RecordForm() {
                   name="customer_name"
                   value={formData.customer_name}
                   onChange={handleChange}
+                  placeholder="김남권"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">고객 연락처</label>
+                <input
+                  type="text"
+                  name="customer_phone"
+                  value={formData.customer_phone}
+                  onChange={handleChange}
+                  placeholder="010-1234-5678 (자동 하이픈)"
+                  maxLength="13"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">AS/연락용 (스케줄에는 미표시)</p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  시공팀 <span className="text-red-500">*</span>
+                  시공팀 <span className="text-gray-400">(선택사항)</span>
                 </label>
                 <select
                   name="team"
                   value={formData.team}
                   onChange={handleChange}
-                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">선택하세요</option>
+                  <option value="">선택 없음</option>
                   {teams.map(team => (
                     <option key={team.id} value={team.team_name}>
                       {team.team_name}
@@ -258,28 +292,42 @@ export default function RecordForm() {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">현장 주소</label>
                 <input
                   type="text"
                   name="site_address"
                   value={formData.site_address}
                   onChange={handleChange}
-                  placeholder="울산 남구"
+                  placeholder="울산 북구"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">동/호수</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">상세주소 (아파트명 + 동호)</label>
                 <input
                   type="text"
-                  name="building_unit"
-                  value={formData.building_unit}
+                  name="address_detail"
+                  value={formData.address_detail}
                   onChange={handleChange}
-                  placeholder="옥동 서광 101동 1608호"
+                  placeholder="새로은 201동 1002호"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">스케줄에 동/호 형식으로 표시됩니다</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">시공틀수</label>
+                <input
+                  type="number"
+                  name="frame_count"
+                  value={formData.frame_count || ''}
+                  onChange={handleChange}
+                  placeholder="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">스케줄에 동/호(시공틀수)로 표기됩니다</p>
               </div>
             </div>
           </section>
@@ -559,6 +607,17 @@ export default function RecordForm() {
                   className="mr-2 w-4 h-4"
                 />
                 <span className="text-purple-700 font-medium">몰+타</span>
+              </label>
+
+              <label className="flex items-center p-3 border-2 border-red-300 bg-red-50 rounded-md cursor-pointer hover:bg-red-100">
+                <input
+                  type="checkbox"
+                  name="needs_fabrication"
+                  checked={formData.needs_fabrication}
+                  onChange={handleChange}
+                  className="mr-2 w-4 h-4"
+                />
+                <span className="text-red-700 font-medium">제작창 (현금수금)</span>
               </label>
             </div>
           </section>

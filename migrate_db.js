@@ -20,7 +20,11 @@ try {
     'ALTER TABLE construction_records ADD COLUMN has_louver BOOLEAN DEFAULT 0',
     'ALTER TABLE construction_records ADD COLUMN has_molding BOOLEAN DEFAULT 0',
     'ALTER TABLE construction_records ADD COLUMN has_tile BOOLEAN DEFAULT 0',
-    'ALTER TABLE construction_records ADD COLUMN has_molding_tile BOOLEAN DEFAULT 0'
+    'ALTER TABLE construction_records ADD COLUMN has_molding_tile BOOLEAN DEFAULT 0',
+    'ALTER TABLE construction_records ADD COLUMN frame_count INTEGER DEFAULT 0',
+    'ALTER TABLE construction_records ADD COLUMN needs_fabrication BOOLEAN DEFAULT 0',
+    'ALTER TABLE construction_records ADD COLUMN customer_phone TEXT',
+    'ALTER TABLE construction_records ADD COLUMN address_detail TEXT'
   ];
 
   for (const sql of columnsToAdd) {

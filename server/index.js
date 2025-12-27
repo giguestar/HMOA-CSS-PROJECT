@@ -103,24 +103,27 @@ app.post('/api/records', (req, res) => {
     
     const insert = db.prepare(`
       INSERT INTO construction_records (
-        construction_date, client_company, customer_name, special_notes,
-        is_resident, site_address, building_unit, team, settlement_status,
+        construction_date, client_company, customer_name, customer_phone, special_notes,
+        is_resident, site_address, address_detail, building_unit, frame_count, team, settlement_status,
         standard_cost, protection_cost, demolition_qty, demolition_cost,
         equipment_desc, equipment_cost, equipment_provider, demolition_team, measurement_cost,
         has_railing, has_security_window, has_roll_screen, has_louver,
-        has_molding, has_tile, has_molding_tile,
+        has_molding, has_tile, has_molding_tile, needs_fabrication,
         outsource_total_cost, actual_settlement, remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insert.run(
       data.construction_date,
       data.client_company,
       data.customer_name,
+      data.customer_phone,
       data.special_notes,
       data.is_resident,
       data.site_address,
+      data.address_detail,
       data.building_unit,
+      data.frame_count || 0,
       data.team,
       data.settlement_status || '',
       data.standard_cost || 0,
@@ -139,6 +142,7 @@ app.post('/api/records', (req, res) => {
       data.has_molding ? 1 : 0,
       data.has_tile ? 1 : 0,
       data.has_molding_tile ? 1 : 0,
+      data.needs_fabrication ? 1 : 0,
       data.outsource_total_cost || 0,
       data.actual_settlement || 0,
       data.remarks
@@ -158,6 +162,8 @@ app.post('/api/records', (req, res) => {
 
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
+    console.error('❌ 시공내역 등록 에러:', error);
+    console.error('❌ 받은 데이터:', JSON.stringify(req.body, null, 2));
     res.status(500).json({ error: error.message });
   }
 });
@@ -169,14 +175,14 @@ app.put('/api/records/:id', (req, res) => {
     
     const update = db.prepare(`
       UPDATE construction_records SET
-        construction_date = ?, client_company = ?, customer_name = ?,
-        special_notes = ?, is_resident = ?, site_address = ?,
-        building_unit = ?, team = ?, settlement_status = ?,
+        construction_date = ?, client_company = ?, customer_name = ?, customer_phone = ?,
+        special_notes = ?, is_resident = ?, site_address = ?, address_detail = ?,
+        building_unit = ?, frame_count = ?, team = ?, settlement_status = ?,
         standard_cost = ?, protection_cost = ?, demolition_qty = ?,
         demolition_cost = ?, equipment_desc = ?, equipment_cost = ?,
         equipment_provider = ?, demolition_team = ?, measurement_cost = ?,
         has_railing = ?, has_security_window = ?, has_roll_screen = ?, has_louver = ?,
-        has_molding = ?, has_tile = ?, has_molding_tile = ?,
+        has_molding = ?, has_tile = ?, has_molding_tile = ?, needs_fabrication = ?,
         outsource_total_cost = ?, actual_settlement = ?,
         remarks = ?, updated_at = datetime('now', 'localtime')
       WHERE id = ?
@@ -186,10 +192,13 @@ app.put('/api/records/:id', (req, res) => {
       data.construction_date,
       data.client_company,
       data.customer_name,
+      data.customer_phone,
       data.special_notes,
       data.is_resident,
       data.site_address,
+      data.address_detail,
       data.building_unit,
+      data.frame_count || 0,
       data.team,
       data.settlement_status,
       data.standard_cost || 0,
@@ -208,6 +217,7 @@ app.put('/api/records/:id', (req, res) => {
       data.has_molding ? 1 : 0,
       data.has_tile ? 1 : 0,
       data.has_molding_tile ? 1 : 0,
+      data.needs_fabrication ? 1 : 0,
       data.outsource_total_cost || 0,
       data.actual_settlement || 0,
       data.remarks,
@@ -260,6 +270,69 @@ app.get('/api/schedule/:year/:month', (req, res) => {
     `).all(startDate, endDate);
 
     res.json(records);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 달력 노트 API (휴가자, 일당, 쉬는 팀)
+// 월별 노트 조회
+app.get('/api/calendar-notes/:year/:month', (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const endDate = `${year}-${month.padStart(2, '0')}-31`;
+
+    const notes = db.prepare(`
+      SELECT * FROM calendar_notes
+      WHERE note_date >= ? AND note_date <= ?
+      ORDER BY note_date
+    `).all(startDate, endDate);
+
+    res.json(notes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 특정 날짜 노트 조회
+app.get('/api/calendar-notes/date/:date', (req, res) => {
+  try {
+    const { date } = req.params;
+    const note = db.prepare(`
+      SELECT * FROM calendar_notes WHERE note_date = ?
+    `).get(date);
+
+    res.json(note || { note_date: date, vacation_members: '', daily_workers: '', off_teams: '' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 노트 저장/수정
+app.post('/api/calendar-notes', (req, res) => {
+  try {
+    const { note_date, vacation_members, daily_workers, off_teams } = req.body;
+
+    // 기존 노트 확인
+    const existing = db.prepare('SELECT id FROM calendar_notes WHERE note_date = ?').get(note_date);
+
+    if (existing) {
+      // 업데이트
+      db.prepare(`
+        UPDATE calendar_notes 
+        SET vacation_members = ?, daily_workers = ?, off_teams = ?
+        WHERE note_date = ?
+      `).run(vacation_members, daily_workers, off_teams, note_date);
+    } else {
+      // 신규 삽입
+      db.prepare(`
+        INSERT INTO calendar_notes (note_date, vacation_members, daily_workers, off_teams)
+        VALUES (?, ?, ?, ?)
+      `).run(note_date, vacation_members, daily_workers, off_teams);
+    }
+
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
