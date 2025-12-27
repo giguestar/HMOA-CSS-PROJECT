@@ -5,6 +5,8 @@ import RecordForm from './pages/RecordForm';
 import RecordList from './pages/RecordList';
 import Schedule from './pages/Schedule';
 import Settlement from './pages/Settlement';
+import MeasurementForm from './pages/MeasurementForm';
+import MeasurementList from './pages/MeasurementList';
 import LoginModal from './components/LoginModal';
 
 function App() {
@@ -35,6 +37,7 @@ function App() {
   // 권한에 따른 메뉴 구성
   const allNavigation = [
     { name: '대시보드', path: '/', icon: '📊', roles: ['admin', 'viewer'] },
+    { name: '실측 관리', path: '/measurements', icon: '📏', roles: ['admin'] },
     { name: '시공내역 등록', path: '/record/new', icon: '✏️', roles: ['admin'] },
     { name: '시공내역 조회', path: '/records', icon: '📋', roles: ['admin'] },
     { name: '월간 스케줄', path: '/schedule', icon: '📅', roles: ['admin', 'viewer'] },
@@ -100,6 +103,9 @@ function App() {
             <Route path="/" element={<Dashboard userRole={userRole} />} />
             {userRole === 'admin' && (
               <>
+                <Route path="/measurements" element={<MeasurementList />} />
+                <Route path="/measurements/new" element={<MeasurementForm />} />
+                <Route path="/measurements/edit/:id" element={<MeasurementForm />} />
                 <Route path="/record/new" element={<RecordForm />} />
                 <Route path="/record/edit/:id" element={<RecordForm />} />
                 <Route path="/records" element={<RecordList />} />

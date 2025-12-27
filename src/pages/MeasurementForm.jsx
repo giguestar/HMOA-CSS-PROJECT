@@ -15,9 +15,8 @@ export default function MeasurementForm() {
     address_detail: '',
     request_date: new Date().toISOString().split('T')[0],
     scheduled_measurement_date: '',
-    measurement_time: '',
+    scheduled_measurement_time: '',
     assigned_manager: '',
-    measurement_assignee: '',
     priority: 'normal',
     status: 'pending',
     desired_construction_date: '',
@@ -141,7 +140,7 @@ export default function MeasurementForm() {
                   required
                 >
                   {companies.map(company => (
-                    <key={company.company_name} value={company.company_name}>
+                    <option key={company.company_name} value={company.company_name}>
                       {company.company_name}
                     </option>
                   ))}
@@ -250,21 +249,6 @@ export default function MeasurementForm() {
                 </select>
               </div>
 
-              {/* 실측예정자 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  실측예정자
-                </label>
-                <input
-                  type="text"
-                  name="measurement_assignee"
-                  value={form.measurement_assignee}
-                  onChange={handleChange}
-                  placeholder="실측 담당자 이름"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
               {/* 실측 예정일 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -286,8 +270,8 @@ export default function MeasurementForm() {
                 </label>
                 <input
                   type="time"
-                  name="measurement_time"
-                  value={form.measurement_time}
+                  name="scheduled_measurement_time"
+                  value={form.scheduled_measurement_time}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
