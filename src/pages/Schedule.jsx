@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import nonResidentIcon from '../assets/non-resident-icon.png';
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -214,7 +215,10 @@ export default function Schedule() {
             <div className="space-y-1">
               <div className="text-xs"><span className="text-green-600 font-semibold">녹색</span>: 시공팀</div>
               <div className="text-xs"><span className="text-red-600 font-semibold">빨강색</span>: 철거팀</div>
-              <div className="text-xs"><span className="text-blue-500 font-semibold">🔵</span>: 비거주</div>
+              <div className="text-xs flex items-center gap-1">
+                <img src={nonResidentIcon} alt="비거주" className="w-3 h-3" />
+                <span>: 비거주</span>
+              </div>
               <div className="text-xs"><span className="text-red-600 font-semibold">🔴</span>: 제작창 (현금수금)</div>
             </div>
           </div>
@@ -438,7 +442,12 @@ export default function Schedule() {
                               <div className="px-1.5 py-0.5 bg-gray-50 flex items-center gap-1 flex-wrap text-[8px] leading-tight">
                                 {/* 비거주 아이콘 */}
                                 {record.is_resident === '비거주' && (
-                                  <span className="text-blue-600 font-bold text-[10px]" title="비거주">🔵</span>
+                                  <img 
+                                    src={nonResidentIcon} 
+                                    alt="비거주" 
+                                    className="w-3 h-3"
+                                    title="비거주"
+                                  />
                                 )}
                                 
                                 {/* 제작창 아이콘 */}
