@@ -11,6 +11,15 @@ export default function MeasurementList() {
     manager: '',
     priority: ''
   });
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // 현재 로그인한 사용자 정보 가져오기
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
 
   useEffect(() => {
     fetchMeasurements();
@@ -42,6 +51,45 @@ export default function MeasurementList() {
       fetchMeasurements();
     } catch (error) {
       alert('삭제 실패: ' + error.message);
+    }
+  };
+
+  // 실측 완료 처리
+  const handleMeasurementComplete = async (e, id, measurement) => {
+    e.stopPropagation();
+    
+    if (!currentUser) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    // 이미 완료된 경우 취소 처리
+    if (measurement.measurement_completed) {
+      if (!confirm('실측 완료를 취소하시겠습니까?')) return;
+      
+      try {
+        await api.put(`/api/measurements/${id}/uncomplete`, {
+          username: currentUser.username
+        });
+        alert('실측 완료가 취소되었습니다.');
+        fetchMeasurements();
+      } catch (error) {
+        alert('실측 완료 취소 실패: ' + (error.response?.data?.error || error.message));
+      }
+      return;
+    }
+
+    // 완료 처리
+    if (!confirm('실측을 완료 처리하시겠습니까?')) return;
+    
+    try {
+      await api.put(`/api/measurements/${id}/complete`, {
+        username: currentUser.username
+      });
+      alert('실측 완료 처리되었습니다.');
+      fetchMeasurements();
+    } catch (error) {
+      alert('실측 완료 처리 실패: ' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -198,6 +246,9 @@ export default function MeasurementList() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   상태
                 </th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  실측완료
+                </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   관리
                 </th>
@@ -206,7 +257,7 @@ export default function MeasurementList() {
             <tbody className="bg-white divide-y divide-gray-200">
               {measurements.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan="10" className="px-6 py-8 text-center text-gray-500">
                     등록된 실측 요청이 없습니다.
                   </td>
                 </tr>
@@ -268,6 +319,27 @@ export default function MeasurementList() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(item.status)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <input
+                            type="checkbox"
+                            checked={item.measurement_completed === 1}
+                            onChange={(e) => handleMeasurementComplete(e, item.id, item)}
+                            disabled={
+                              currentUser && 
+                              currentUser.role !== 'admin' && 
+                              item.assigned_manager !== currentUser.display_name
+                            }
+                            className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          {item.measurement_completed === 1 && (
+                            <span className="text-xs text-green-600 font-medium">
+                              ✓ {item.measurement_completed_by}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button

@@ -13,36 +13,43 @@ import LoginModal from './components/LoginModal';
 function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
   const [userRole, setUserRole] = useState(null); // 'admin' or 'viewer'
+  const [currentUser, setCurrentUser] = useState(null); // 사용자 정보 객체
   const [showLogin, setShowLogin] = useState(true);
 
-  const handleLogin = (role) => {
+  const handleLogin = (role, user) => {
     setUserRole(role);
+    setCurrentUser(user);
     setShowLogin(false);
     localStorage.setItem('userRole', role);
+    localStorage.setItem('user', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setUserRole(null);
+    setCurrentUser(null);
     setShowLogin(true);
     localStorage.removeItem('userRole');
+    localStorage.removeItem('user');
   };
 
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole');
-    if (savedRole) {
+    const savedUser = localStorage.getItem('user');
+    if (savedRole && savedUser) {
       setUserRole(savedRole);
+      setCurrentUser(JSON.parse(savedUser));
       setShowLogin(false);
     }
   }, []);
 
   // 권한에 따른 메뉴 구성
   const allNavigation = [
-    { name: '대시보드', path: '/', icon: '📊', roles: ['admin', 'viewer'] },
-    { name: '실측 관리', path: '/measurements', icon: '📏', roles: ['admin'] },
-    { name: '실측 달력', path: '/measurement-schedule', icon: '📆', roles: ['admin', 'viewer'] },
+    { name: '대시보드', path: '/', icon: '📊', roles: ['admin', 'manager', 'viewer'] },
+    { name: '실측 관리', path: '/measurements', icon: '📏', roles: ['admin', 'manager'] },
+    { name: '실측 달력', path: '/measurement-schedule', icon: '📆', roles: ['admin', 'manager', 'viewer'] },
     { name: '시공내역 등록', path: '/record/new', icon: '✏️', roles: ['admin'] },
     { name: '시공내역 조회', path: '/records', icon: '📋', roles: ['admin'] },
-    { name: '월간 스케줄', path: '/schedule', icon: '📅', roles: ['admin', 'viewer'] },
+    { name: '월간 스케줄', path: '/schedule', icon: '📅', roles: ['admin', 'manager', 'viewer'] },
     { name: '정산 관리', path: '/settlement', icon: '💰', roles: ['admin'] },
   ];
 
@@ -62,9 +69,9 @@ function App() {
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">🏗️</span>
                 <h1 className="text-xl font-bold text-gray-900">샷시시공 통합관리</h1>
-                {userRole && (
+                {currentUser && (
                   <span className="ml-4 px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                    {userRole === 'admin' ? '👑 관리자' : '👀 조회모드'}
+                    {currentUser.role === 'admin' ? '👑 관리자' : '👨‍💼 ' + currentUser.display_name}
                   </span>
                 )}
               </div>

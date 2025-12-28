@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import bcrypt from 'bcryptjs';
 import db, { initDatabase } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +43,66 @@ try {
 }
 
 // ==================== API Routes ====================
+
+// 0. 인증 관련 API
+// 로그인
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: '사용자명과 비밀번호를 입력해주세요.' });
+    }
+
+    // 사용자 조회
+    const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
+
+    if (!user) {
+      return res.status(401).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    // 비밀번호 확인
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: '비밀번호가 일치하지 않습니다.' });
+    }
+
+    // 비밀번호 제외하고 반환
+    const { password: _, ...userWithoutPassword } = user;
+    
+    res.json({ 
+      success: true, 
+      user: userWithoutPassword 
+    });
+  } catch (error) {
+    console.error('❌ 로그인 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 현재 사용자 정보 조회
+app.get('/api/auth/me', (req, res) => {
+  try {
+    const username = req.headers['x-username'];
+    
+    if (!username) {
+      return res.status(401).json({ error: '인증이 필요합니다.' });
+    }
+
+    const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
+
+    if (!user) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } catch (error) {
+    console.error('❌ 사용자 정보 조회 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 1. 시공내역 관련 API
 // 시공내역 전체 조회
@@ -597,6 +658,115 @@ app.delete('/api/measurements/:id', (req, res) => {
     db.prepare('DELETE FROM measurement_requests WHERE id = ?').run(req.params.id);
     res.json({ success: true });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 실측 완료 처리 (매니저 본인만 가능)
+app.put('/api/measurements/:id/complete', (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
+    }
+
+    // 실측 정보 조회
+    const measurement = db.prepare('SELECT * FROM measurement_requests WHERE id = ?').get(req.params.id);
+    
+    if (!measurement) {
+      return res.status(404).json({ error: '실측 요청을 찾을 수 없습니다.' });
+    }
+
+    // 사용자 정보 조회
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    
+    if (!user) {
+      return res.status(401).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    // 관리자는 모든 실측 완료 가능, 매니저는 본인 담당만 가능
+    if (user.role !== 'admin' && measurement.assigned_manager !== user.display_name) {
+      return res.status(403).json({ 
+        error: '본인이 담당한 실측만 완료 처리할 수 있습니다.',
+        assigned: measurement.assigned_manager,
+        current: user.display_name
+      });
+    }
+
+    // 실측 완료 처리
+    const update = db.prepare(`
+      UPDATE measurement_requests SET
+        measurement_completed = 1,
+        measurement_completed_at = datetime('now', 'localtime'),
+        measurement_completed_by = ?,
+        status = 'measured',
+        updated_at = datetime('now', 'localtime')
+      WHERE id = ?
+    `);
+
+    update.run(user.display_name, req.params.id);
+
+    res.json({ 
+      success: true,
+      message: '실측 완료 처리되었습니다.',
+      completed_by: user.display_name
+    });
+  } catch (error) {
+    console.error('❌ 실측 완료 처리 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 실측 완료 취소
+app.put('/api/measurements/:id/uncomplete', (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
+    }
+
+    // 실측 정보 조회
+    const measurement = db.prepare('SELECT * FROM measurement_requests WHERE id = ?').get(req.params.id);
+    
+    if (!measurement) {
+      return res.status(404).json({ error: '실측 요청을 찾을 수 없습니다.' });
+    }
+
+    // 사용자 정보 조회
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    
+    if (!user) {
+      return res.status(401).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    // 관리자는 모든 실측 완료 취소 가능, 매니저는 본인 담당만 가능
+    if (user.role !== 'admin' && measurement.assigned_manager !== user.display_name) {
+      return res.status(403).json({ 
+        error: '본인이 담당한 실측만 완료 취소할 수 있습니다.'
+      });
+    }
+
+    // 실측 완료 취소
+    const update = db.prepare(`
+      UPDATE measurement_requests SET
+        measurement_completed = 0,
+        measurement_completed_at = NULL,
+        measurement_completed_by = NULL,
+        status = 'pending',
+        updated_at = datetime('now', 'localtime')
+      WHERE id = ?
+    `);
+
+    update.run(req.params.id);
+
+    res.json({ 
+      success: true,
+      message: '실측 완료가 취소되었습니다.'
+    });
+  } catch (error) {
+    console.error('❌ 실측 완료 취소 에러:', error);
     res.status(500).json({ error: error.message });
   }
 });

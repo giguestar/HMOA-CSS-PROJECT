@@ -167,6 +167,7 @@ export default function MeasurementSchedule() {
               <div className="text-xs"><span className="text-blue-600">🔵</span> 완료: 실측 완료</div>
               <div className="text-xs"><span className="text-green-600">🟢</span> 확정: 시공일 확정</div>
               <div className="text-xs"><span className="text-purple-600">🟣</span> 등록: 시공등록 완료</div>
+              <div className="text-xs"><span className="text-green-600 font-bold">✓</span> 실측완료: 옅은 회색 표시</div>
             </div>
           </div>
           
@@ -236,31 +237,41 @@ export default function MeasurementSchedule() {
                           const managerColor = managerColors[measurement.assigned_manager] || '#9CA3AF';
                           const statusColor = getStatusColor(measurement.status);
                           const isPriority = measurement.priority === 'urgent';
+                          const isCompleted = measurement.measurement_completed === 1;
                           
                           return (
                             <div
                               key={measurement.id}
                               onClick={() => setSelectedMeasurement(measurement)}
-                              className="text-xs rounded-md p-1.5 cursor-pointer transition-all hover:shadow-md"
+                              className={`text-xs rounded-md p-1.5 cursor-pointer transition-all hover:shadow-md ${
+                                isCompleted ? 'opacity-50' : ''
+                              }`}
                               style={{ 
-                                backgroundColor: `${managerColor}15`,
-                                borderLeft: `3px solid ${managerColor}`
+                                backgroundColor: isCompleted ? '#F3F4F6' : `${managerColor}15`,
+                                borderLeft: isCompleted ? '3px solid #D1D5DB' : `3px solid ${managerColor}`
                               }}
                             >
-                              {/* 첫 줄: 대리점 + 고객명 + 우선순위 */}
+                              {/* 첫 줄: 대리점 + 고객명 + 우선순위 + 완료 표시 */}
                               <div className="flex items-center justify-between gap-1 mb-0.5">
                                 <div className="flex items-center gap-1 flex-1 min-w-0">
-                                  <span className="font-bold text-gray-900">{measurement.client_company}</span>
+                                  <span className={`font-bold ${isCompleted ? 'text-gray-500' : 'text-gray-900'}`}>
+                                    {measurement.client_company}
+                                  </span>
                                   <span className="text-gray-500">|</span>
-                                  <span className="text-gray-700 truncate">{measurement.customer_name}</span>
+                                  <span className={`truncate ${isCompleted ? 'text-gray-500' : 'text-gray-700'}`}>
+                                    {measurement.customer_name}
+                                  </span>
+                                  {isCompleted && (
+                                    <span className="text-green-600 font-bold text-[10px]">✓</span>
+                                  )}
                                 </div>
-                                {isPriority && (
+                                {isPriority && !isCompleted && (
                                   <span className="text-red-600 font-bold text-[10px]">★★★</span>
                                 )}
                               </div>
                               
                               {/* 둘째 줄: 주소 */}
-                              <div className="text-gray-600 text-[10px] truncate mb-0.5">
+                              <div className={`text-[10px] truncate mb-0.5 ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
                                 {measurement.site_address}
                               </div>
                               
@@ -269,22 +280,27 @@ export default function MeasurementSchedule() {
                                 <div className="flex items-center gap-1">
                                   <span 
                                     className="text-white font-semibold text-[9px] px-1.5 py-0.5 rounded"
-                                    style={{ backgroundColor: managerColor }}
+                                    style={{ backgroundColor: isCompleted ? '#9CA3AF' : managerColor }}
                                   >
                                     {measurement.assigned_manager || '미배정'}
                                   </span>
                                   {measurement.scheduled_measurement_time && (
-                                    <span className="text-gray-600 text-[9px]">
+                                    <span className={`text-[9px] ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
                                       {measurement.scheduled_measurement_time}
                                     </span>
                                   )}
                                 </div>
-                                <span 
-                                  className="text-white font-semibold text-[9px] px-1.5 py-0.5 rounded"
-                                  style={{ backgroundColor: statusColor }}
-                                >
-                                  {getStatusLabel(measurement.status)}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                  {isCompleted && (
+                                    <span className="text-green-600 font-bold text-[9px]">✓완료</span>
+                                  )}
+                                  <span 
+                                    className="text-white font-semibold text-[9px] px-1.5 py-0.5 rounded"
+                                    style={{ backgroundColor: isCompleted ? '#9CA3AF' : statusColor }}
+                                  >
+                                    {getStatusLabel(measurement.status)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           );
