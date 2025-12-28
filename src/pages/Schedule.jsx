@@ -11,6 +11,7 @@ export default function Schedule() {
   const [loading, setLoading] = useState(true);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedRecord, setSelectedRecord] = useState(null); // 시공 상세 모달용
   const [noteForm, setNoteForm] = useState({
     vacation_members: '',
     daily_workers: '',
@@ -391,7 +392,7 @@ export default function Schedule() {
                             return (
                               <div
                                 key={record.id}
-                                onClick={() => navigate(`/record/edit/${record.id}`)}
+                                onClick={() => setSelectedRecord(record)}
                                 className="text-[10px] p-1.5 bg-gray-100 rounded border border-gray-300 hover:bg-gray-200 cursor-pointer"
                               >
                                 <div className="font-medium text-gray-800">
@@ -409,7 +410,7 @@ export default function Schedule() {
                           return (
                             <div
                               key={record.id}
-                              onClick={() => navigate(`/record/edit/${record.id}`)}
+                              onClick={() => setSelectedRecord(record)}
                               className="text-[10px] rounded border border-gray-300 hover:shadow-md cursor-pointer transition-all overflow-hidden bg-white"
                             >
                               {/* 헤더: 업체 아이콘 + 고객명 + 주소 + 부가작업 */}
@@ -564,6 +565,113 @@ export default function Schedule() {
               >
                 저장
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 시공 상세 정보 모달 */}
+      {selectedRecord && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">시공 상세 정보</h2>
+              <button
+                onClick={() => setSelectedRecord(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* 기본 정보 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">대리점</p>
+                  <p className="text-base font-semibold">{selectedRecord.client_company}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">고객명</p>
+                  <p className="text-base font-semibold">{selectedRecord.customer_name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">연락처</p>
+                  <p className="text-base">{selectedRecord.customer_phone || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">실측 오더일</p>
+                  <p className="text-base">{selectedRecord.construction_date}</p>
+                </div>
+              </div>
+
+              {/* 주소 */}
+              <div>
+                <p className="text-sm text-gray-600">주소</p>
+                <p className="text-base font-medium">{selectedRecord.site_address}</p>
+                {selectedRecord.address_detail && (
+                  <p className="text-sm text-gray-600">{selectedRecord.address_detail}</p>
+                )}
+              </div>
+
+              {/* 시공 정보 */}
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                <div>
+                  <p className="text-sm text-gray-600">시공팀</p>
+                  <p className="text-base font-semibold">{selectedRecord.team || '미배정'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">철거팀</p>
+                  <p className="text-base">{selectedRecord.demolition_team || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">시공 예정일</p>
+                  <p className="text-base font-bold text-green-600">
+                    {selectedRecord.construction_date}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">시공 틀 수</p>
+                  <p className="text-base">{selectedRecord.frame_count || '-'}개</p>
+                </div>
+              </div>
+
+              {/* 확정 시공일 */}
+              {selectedRecord.confirmed_construction_date && (
+                <div className="border-t pt-4">
+                  <p className="text-sm text-gray-600">확정 시공일</p>
+                  <p className="text-base font-bold text-green-600">
+                    {selectedRecord.confirmed_construction_date}
+                  </p>
+                </div>
+              )}
+
+              {/* 특이사항 */}
+              {selectedRecord.special_notes && (
+                <div className="border-t pt-4">
+                  <p className="text-sm text-gray-600 mb-2">특이사항</p>
+                  <p className="text-base bg-gray-50 p-3 rounded-md">{selectedRecord.special_notes}</p>
+                </div>
+              )}
+
+              {/* 버튼 */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setSelectedRecord(null);
+                    navigate(`/record/edit/${selectedRecord.id}`);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  수정하기
+                </button>
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
             </div>
           </div>
         </div>
