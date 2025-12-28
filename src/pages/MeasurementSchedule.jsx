@@ -52,10 +52,9 @@ export default function MeasurementSchedule() {
     if (!day) return [];
     
     const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // 실측 예정일만 달력에 표시 (오더일 제외)
     return measurements.filter(m => 
-      m.scheduled_measurement_date === dateStr || 
-      m.actual_measurement_date === dateStr ||
-      m.request_date === dateStr
+      m.scheduled_measurement_date === dateStr
     );
   };
 

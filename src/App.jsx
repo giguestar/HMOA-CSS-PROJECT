@@ -68,7 +68,7 @@ function App() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">🏗️</span>
-                <h1 className="text-xl font-bold text-gray-900">샷시시공 통합관리</h1>
+                <h1 className="text-lg font-bold text-gray-900">해모아 샷시시공 통합관리</h1>
                 {currentUser && (
                   <span className="ml-4 px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                     {currentUser.role === 'admin' ? '👑 관리자' : '👨‍💼 ' + currentUser.display_name}

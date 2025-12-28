@@ -277,19 +277,7 @@ export default function MeasurementForm() {
                 />
               </div>
 
-              {/* 실측 완료일 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  실측 완료일
-                </label>
-                <input
-                  type="date"
-                  name="actual_measurement_date"
-                  value={form.actual_measurement_date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+
             </div>
           </div>
 
@@ -298,20 +286,6 @@ export default function MeasurementForm() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">🏗️ 시공일 정보</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* 고객 희망 시공일 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  고객 희망 시공일
-                </label>
-                <input
-                  type="date"
-                  name="desired_construction_date"
-                  value={form.desired_construction_date}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
               {/* 확정 시공일 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
