@@ -37,7 +37,7 @@ export default function LoginModal({ onLogin, onClose }) {
 
     try {
       const managerPassword = managerPasswords[account.username];
-      const response = await api.post('/auth/login', { 
+      const response = await api.post('/api/auth/login', { 
         username: account.username, 
         password: managerPassword 
       });
@@ -68,7 +68,7 @@ export default function LoginModal({ onLogin, onClose }) {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', { username, password });
+      const response = await api.post('/api/auth/login', { username, password });
       
       if (response.data.success) {
         const user = response.data.user;
