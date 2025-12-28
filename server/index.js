@@ -900,6 +900,317 @@ app.get('/api/measurements/schedule/:year/:month', (req, res) => {
   }
 });
 
+// ==================== 정산 관리 API ====================
+
+// 정산 목록 조회
+app.get('/api/settlements', (req, res) => {
+  try {
+    const { year, month, client_company, status, period } = req.query;
+    
+    let query = 'SELECT * FROM settlements WHERE 1=1';
+    const params = [];
+    
+    if (year && month) {
+      query += ` AND strftime('%Y', construction_date) = ? AND strftime('%m', construction_date) = ?`;
+      params.push(year, month.padStart(2, '0'));
+    }
+    
+    if (client_company) {
+      query += ` AND client_company = ?`;
+      params.push(client_company);
+    }
+    
+    if (status) {
+      query += ` AND settlement_status = ?`;
+      params.push(status);
+    }
+    
+    if (period) {
+      query += ` AND settlement_period = ?`;
+      params.push(period);
+    }
+    
+    query += ` ORDER BY construction_date DESC, created_at DESC`;
+    
+    const settlements = db.prepare(query).all(...params);
+    res.json(settlements);
+  } catch (error) {
+    console.error('❌ 정산 목록 조회 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 정산 상세 조회
+app.get('/api/settlements/:id', (req, res) => {
+  try {
+    const settlement = db.prepare('SELECT * FROM settlements WHERE id = ?').get(req.params.id);
+    
+    if (!settlement) {
+      return res.status(404).json({ error: '정산 정보를 찾을 수 없습니다.' });
+    }
+    
+    res.json(settlement);
+  } catch (error) {
+    console.error('❌ 정산 상세 조회 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 정산 생성
+app.post('/api/settlements', (req, res) => {
+  try {
+    const data = req.body;
+    
+    const insert = db.prepare(`
+      INSERT INTO settlements (
+        construction_record_id, construction_date, client_company,
+        customer_name, site_address, address_detail, team,
+        billing_standard_cost, billing_frame_count, billing_protection_cost,
+        billing_demolition_cost, billing_equipment_cost, billing_molding_cost,
+        billing_tile_cost, billing_other_cost, billing_measurement_cost,
+        billing_total_amount,
+        payment_standard_cost, payment_protection_cost, payment_demolition_cost,
+        payment_equipment_cost, payment_molding_cost, payment_tile_cost,
+        payment_other_cost, payment_measurement_cost, payment_total_amount,
+        profit_amount, profit_rate,
+        custom_order_company, custom_order_desc, custom_order_amount,
+        customer_extra_charge_desc, customer_extra_charge_amount,
+        cash_payment, cash_amount,
+        settlement_period, settlement_date,
+        billing_notes, payment_notes, payment_diff_notes,
+        customer_notes, site_notes
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?, ?
+      )
+    `);
+    
+    const result = insert.run(
+      data.construction_record_id,
+      data.construction_date,
+      data.client_company,
+      data.customer_name || '',
+      data.site_address || '',
+      data.address_detail || '',
+      data.team || '',
+      data.billing_standard_cost || 0,
+      data.billing_frame_count || 0,
+      data.billing_protection_cost || 0,
+      data.billing_demolition_cost || 0,
+      data.billing_equipment_cost || 0,
+      data.billing_molding_cost || 0,
+      data.billing_tile_cost || 0,
+      data.billing_other_cost || 0,
+      data.billing_measurement_cost || 0,
+      data.billing_total_amount || 0,
+      data.payment_standard_cost || 0,
+      data.payment_protection_cost || 0,
+      data.payment_demolition_cost || 0,
+      data.payment_equipment_cost || 0,
+      data.payment_molding_cost || 0,
+      data.payment_tile_cost || 0,
+      data.payment_other_cost || 0,
+      data.payment_measurement_cost || 0,
+      data.payment_total_amount || 0,
+      data.profit_amount || 0,
+      data.profit_rate || 0,
+      data.custom_order_company || '',
+      data.custom_order_desc || '',
+      data.custom_order_amount || 0,
+      data.customer_extra_charge_desc || '',
+      data.customer_extra_charge_amount || 0,
+      data.cash_payment || 0,
+      data.cash_amount || 0,
+      data.settlement_period || '',
+      data.settlement_date || null,
+      data.billing_notes || '',
+      data.payment_notes || '',
+      data.payment_diff_notes || '',
+      data.customer_notes || '',
+      data.site_notes || ''
+    );
+    
+    console.log(`✅ 정산 생성: ID ${result.lastInsertRowid}`);
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    console.error('❌ 정산 생성 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 정산 수정
+app.put('/api/settlements/:id', (req, res) => {
+  try {
+    const data = req.body;
+    
+    const update = db.prepare(`
+      UPDATE settlements SET
+        construction_date = ?, client_company = ?, customer_name = ?,
+        site_address = ?, address_detail = ?, team = ?,
+        billing_standard_cost = ?, billing_frame_count = ?,
+        billing_protection_cost = ?, billing_demolition_cost = ?,
+        billing_equipment_cost = ?, billing_molding_cost = ?,
+        billing_tile_cost = ?, billing_other_cost = ?,
+        billing_measurement_cost = ?, billing_total_amount = ?,
+        payment_standard_cost = ?, payment_protection_cost = ?,
+        payment_demolition_cost = ?, payment_equipment_cost = ?,
+        payment_molding_cost = ?, payment_tile_cost = ?,
+        payment_other_cost = ?, payment_measurement_cost = ?,
+        payment_total_amount = ?, profit_amount = ?, profit_rate = ?,
+        custom_order_company = ?, custom_order_desc = ?,
+        custom_order_amount = ?, customer_extra_charge_desc = ?,
+        customer_extra_charge_amount = ?, cash_payment = ?,
+        cash_amount = ?, settlement_period = ?, settlement_date = ?,
+        billing_notes = ?, payment_notes = ?, payment_diff_notes = ?,
+        customer_notes = ?, site_notes = ?,
+        updated_at = datetime('now', 'localtime')
+      WHERE id = ?
+    `);
+    
+    update.run(
+      data.construction_date,
+      data.client_company,
+      data.customer_name || '',
+      data.site_address || '',
+      data.address_detail || '',
+      data.team || '',
+      data.billing_standard_cost || 0,
+      data.billing_frame_count || 0,
+      data.billing_protection_cost || 0,
+      data.billing_demolition_cost || 0,
+      data.billing_equipment_cost || 0,
+      data.billing_molding_cost || 0,
+      data.billing_tile_cost || 0,
+      data.billing_other_cost || 0,
+      data.billing_measurement_cost || 0,
+      data.billing_total_amount || 0,
+      data.payment_standard_cost || 0,
+      data.payment_protection_cost || 0,
+      data.payment_demolition_cost || 0,
+      data.payment_equipment_cost || 0,
+      data.payment_molding_cost || 0,
+      data.payment_tile_cost || 0,
+      data.payment_other_cost || 0,
+      data.payment_measurement_cost || 0,
+      data.payment_total_amount || 0,
+      data.profit_amount || 0,
+      data.profit_rate || 0,
+      data.custom_order_company || '',
+      data.custom_order_desc || '',
+      data.custom_order_amount || 0,
+      data.customer_extra_charge_desc || '',
+      data.customer_extra_charge_amount || 0,
+      data.cash_payment || 0,
+      data.cash_amount || 0,
+      data.settlement_period || '',
+      data.settlement_date || null,
+      data.billing_notes || '',
+      data.payment_notes || '',
+      data.payment_diff_notes || '',
+      data.customer_notes || '',
+      data.site_notes || '',
+      req.params.id
+    );
+    
+    console.log(`✅ 정산 수정: ID ${req.params.id}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 정산 수정 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 정산 삭제
+app.delete('/api/settlements/:id', (req, res) => {
+  try {
+    db.prepare('DELETE FROM settlements WHERE id = ?').run(req.params.id);
+    console.log(`✅ 정산 삭제: ID ${req.params.id}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 정산 삭제 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 정산 상태 변경
+app.put('/api/settlements/:id/status', (req, res) => {
+  try {
+    const { billing_status, outsource_payment_status, settlement_status } = req.body;
+    const now = new Date().toISOString().split('T')[0];
+    
+    let query = 'UPDATE settlements SET ';
+    const updates = [];
+    const params = [];
+    
+    if (billing_status) {
+      updates.push('billing_status = ?');
+      params.push(billing_status);
+      if (billing_status === '청구 완료') {
+        updates.push('billing_date = ?');
+        params.push(now);
+      } else if (billing_status === '입금 완료') {
+        updates.push('payment_received_date = ?');
+        params.push(now);
+      }
+    }
+    
+    if (outsource_payment_status) {
+      updates.push('outsource_payment_status = ?');
+      params.push(outsource_payment_status);
+      if (outsource_payment_status === '지급 완료') {
+        updates.push('outsource_payment_date = ?');
+        params.push(now);
+      }
+    }
+    
+    if (settlement_status) {
+      updates.push('settlement_status = ?');
+      params.push(settlement_status);
+      if (settlement_status === '정산 완료') {
+        updates.push('settlement_date = ?');
+        params.push(now);
+      }
+    }
+    
+    updates.push("updated_at = datetime('now', 'localtime')");
+    
+    query += updates.join(', ');
+    query += ' WHERE id = ?';
+    params.push(req.params.id);
+    
+    db.prepare(query).run(...params);
+    
+    console.log(`✅ 정산 상태 변경: ID ${req.params.id}`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ 정산 상태 변경 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 회사별 정산 설정 조회
+app.get('/api/settlement-config', (req, res) => {
+  try {
+    const configs = db.prepare('SELECT * FROM client_settlement_config WHERE is_active = 1').all();
+    res.json(configs);
+  } catch (error) {
+    console.error('❌ 정산 설정 조회 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 외주팀 비율 조회
+app.get('/api/outsource-rates', (req, res) => {
+  try {
+    const rates = db.prepare('SELECT * FROM outsource_rates WHERE is_active = 1').all();
+    res.json(rates);
+  } catch (error) {
+    console.error('❌ 외주 비율 조회 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
