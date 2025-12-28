@@ -346,6 +346,17 @@ export default function MeasurementForm() {
                 <p className="text-xs text-gray-500 mt-1">
                   현재: <span className="font-semibold">{getStatusLabel(form.status)}</span>
                 </p>
+                {isEditMode && (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, status: 'measured' }))}
+                      className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                    >
+                      ✓ 실측 완료로 변경
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

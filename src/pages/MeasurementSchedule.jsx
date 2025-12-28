@@ -8,6 +8,15 @@ export default function MeasurementSchedule() {
   const [measurements, setMeasurements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMeasurement, setSelectedMeasurement] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // 현재 로그인한 사용자 정보 가져오기
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
 
   useEffect(() => {
     fetchMeasurements();
@@ -68,6 +77,34 @@ export default function MeasurementSchedule() {
 
   const goToToday = () => {
     setCurrentDate(new Date());
+  };
+
+  // 실측 상태를 '실측 완료'로 변경
+  const handleStatusToCompleted = async () => {
+    if (!currentUser || !selectedMeasurement) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    // 권한 확인
+    if (currentUser.role !== 'admin' && selectedMeasurement.assigned_manager !== currentUser.display_name) {
+      alert(`본인이 담당한 실측만 완료 처리할 수 있습니다.\n담당자: ${selectedMeasurement.assigned_manager}`);
+      return;
+    }
+
+    if (!confirm('실측 상태를 "실측 완료"로 변경하시겠습니까?')) return;
+
+    try {
+      await api.put(`/api/measurements/${selectedMeasurement.id}/status`, {
+        username: currentUser.username,
+        status: 'measured'
+      });
+      alert('실측 상태가 "실측 완료"로 변경되었습니다.');
+      setSelectedMeasurement(null);
+      fetchMeasurements(); // 목록 새로고침
+    } catch (error) {
+      alert('상태 변경 실패: ' + (error.response?.data?.error || error.message));
+    }
   };
 
   const managerColors = {
@@ -413,22 +450,38 @@ export default function MeasurementSchedule() {
               )}
 
               {/* 버튼 */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => {
-                    setSelectedMeasurement(null);
-                    navigate(`/measurements/edit/${selectedMeasurement.id}`);
-                  }}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  수정하기
-                </button>
-                <button
-                  onClick={() => setSelectedMeasurement(null)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                  닫기
-                </button>
+              <div className="flex flex-col gap-3 pt-4">
+                {/* 실측 완료 버튼 (상태가 measured가 아닐 때만) */}
+                {selectedMeasurement.status !== 'measured' && currentUser && (
+                  <button
+                    onClick={handleStatusToCompleted}
+                    disabled={
+                      currentUser.role !== 'admin' && 
+                      selectedMeasurement.assigned_manager !== currentUser.display_name
+                    }
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    ✓ 실측 완료로 변경
+                  </button>
+                )}
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedMeasurement(null);
+                      navigate(`/measurements/edit/${selectedMeasurement.id}`);
+                    }}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    수정하기
+                  </button>
+                  <button
+                    onClick={() => setSelectedMeasurement(null)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                  >
+                    닫기
+                  </button>
+                </div>
               </div>
             </div>
           </div>

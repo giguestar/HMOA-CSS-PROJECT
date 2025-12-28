@@ -771,6 +771,75 @@ app.put('/api/measurements/:id/uncomplete', (req, res) => {
   }
 });
 
+// 실측 상태 변경 (매니저 본인 담당 건만 가능)
+app.put('/api/measurements/:id/status', (req, res) => {
+  try {
+    const { username, status } = req.body;
+    
+    if (!username) {
+      return res.status(401).json({ error: '로그인이 필요합니다.' });
+    }
+
+    if (!status) {
+      return res.status(400).json({ error: '상태 값이 필요합니다.' });
+    }
+
+    // 실측 정보 조회
+    const measurement = db.prepare('SELECT * FROM measurement_requests WHERE id = ?').get(req.params.id);
+    
+    if (!measurement) {
+      return res.status(404).json({ error: '실측 요청을 찾을 수 없습니다.' });
+    }
+
+    // 사용자 정보 조회
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    
+    if (!user) {
+      return res.status(401).json({ error: '사용자를 찾을 수 없습니다.' });
+    }
+
+    // 관리자는 모든 실측 상태 변경 가능, 매니저는 본인 담당만 가능
+    if (user.role !== 'admin' && measurement.assigned_manager !== user.display_name) {
+      return res.status(403).json({ 
+        error: '본인이 담당한 실측만 상태 변경할 수 있습니다.',
+        assigned: measurement.assigned_manager,
+        current: user.display_name
+      });
+    }
+
+    // 실측 상태 변경
+    const update = db.prepare(`
+      UPDATE measurement_requests SET
+        status = ?,
+        updated_at = datetime('now', 'localtime')
+      WHERE id = ?
+    `);
+
+    update.run(status, req.params.id);
+
+    // 상태가 'measured'로 변경되면 실측 완료 처리도 함께
+    if (status === 'measured') {
+      const updateComplete = db.prepare(`
+        UPDATE measurement_requests SET
+          measurement_completed = 1,
+          measurement_completed_at = datetime('now', 'localtime'),
+          measurement_completed_by = ?
+        WHERE id = ?
+      `);
+      updateComplete.run(user.display_name, req.params.id);
+    }
+
+    res.json({ 
+      success: true,
+      message: '상태가 변경되었습니다.',
+      status: status
+    });
+  } catch (error) {
+    console.error('❌ 실측 상태 변경 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 월별 실측 스케줄 조회
 app.get('/api/measurements/schedule/:year/:month', (req, res) => {
   try {
