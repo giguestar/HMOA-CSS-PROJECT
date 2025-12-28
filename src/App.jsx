@@ -116,10 +116,13 @@ function App() {
                 <Route path="/measurements/new" element={<MeasurementForm />} />
                 <Route path="/measurements/edit/:id" element={<MeasurementForm />} />
                 <Route path="/record/new" element={<RecordForm />} />
-                <Route path="/record/edit/:id" element={<RecordForm />} />
                 <Route path="/records" element={<RecordList />} />
                 <Route path="/settlement" element={<Settlement />} />
               </>
+            )}
+            {/* 매니저도 시공 내역 수정 가능 */}
+            {(userRole === 'admin' || userRole === 'manager') && (
+              <Route path="/record/edit/:id" element={<RecordForm />} />
             )}
             <Route path="/measurement-schedule" element={<MeasurementSchedule userRole={userRole} />} />
             <Route path="/schedule" element={<Schedule userRole={userRole} />} />
