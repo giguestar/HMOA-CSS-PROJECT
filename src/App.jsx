@@ -68,7 +68,7 @@ function App() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">🏗️</span>
-                <h1 className="text-base font-bold text-gray-900 whitespace-nowrap">해모아 샷시시공 통합관리</h1>
+                <h1 className="text-sm font-bold text-gray-900 whitespace-nowrap">해모아 샷시시공 통합관리</h1>
                 {currentUser && (
                   <span className="ml-4 px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                     {currentUser.role === 'admin' ? '👑 관리자' : '👨‍💼 ' + currentUser.display_name}
@@ -110,19 +110,22 @@ function App() {
         <main className="max-w-7xl mx-auto px-4 py-6">
           <Routes>
             <Route path="/" element={<Dashboard userRole={userRole} />} />
+            {/* 관리자 전용 라우트 */}
             {userRole === 'admin' && (
               <>
-                <Route path="/measurements" element={<MeasurementList />} />
-                <Route path="/measurements/new" element={<MeasurementForm />} />
-                <Route path="/measurements/edit/:id" element={<MeasurementForm />} />
                 <Route path="/record/new" element={<RecordForm />} />
                 <Route path="/records" element={<RecordList />} />
                 <Route path="/settlement" element={<Settlement />} />
               </>
             )}
-            {/* 매니저도 시공 내역 수정 가능 */}
+            {/* 관리자 + 매니저 공통 라우트 */}
             {(userRole === 'admin' || userRole === 'manager') && (
-              <Route path="/record/edit/:id" element={<RecordForm />} />
+              <>
+                <Route path="/measurements" element={<MeasurementList />} />
+                <Route path="/measurements/new" element={<MeasurementForm />} />
+                <Route path="/measurements/edit/:id" element={<MeasurementForm />} />
+                <Route path="/record/edit/:id" element={<RecordForm />} />
+              </>
             )}
             <Route path="/measurement-schedule" element={<MeasurementSchedule userRole={userRole} />} />
             <Route path="/schedule" element={<Schedule userRole={userRole} />} />
