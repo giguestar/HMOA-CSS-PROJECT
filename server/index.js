@@ -550,8 +550,8 @@ app.post('/api/measurements', (req, res) => {
       INSERT INTO measurement_requests (
         client_company, customer_name, customer_phone, site_address, address_detail,
         request_date, scheduled_measurement_date, scheduled_measurement_time, assigned_manager,
-        priority, status, desired_construction_date, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        priority, status, desired_construction_date, confirmed_construction_date, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insert.run(
@@ -567,10 +567,46 @@ app.post('/api/measurements', (req, res) => {
       data.priority || 'normal',
       data.status || 'pending',
       data.desired_construction_date || null,
+      data.confirmed_construction_date || null,
       data.notes || ''
     );
 
-    res.json({ success: true, id: result.lastInsertRowid });
+    const measurementId = result.lastInsertRowid;
+
+    // 시공일이 확정된 경우 자동으로 시공 스케줄에 추가
+    if (data.confirmed_construction_date) {
+      // 이미 시공 등록이 있는지 확인
+      const existingRecord = db.prepare(
+        'SELECT id FROM construction_records WHERE customer_name = ? AND construction_date = ?'
+      ).get(data.customer_name, data.confirmed_construction_date);
+
+      if (!existingRecord) {
+        // 시공 스케줄에 자동 추가 (기본 정보만)
+        const insertConstruction = db.prepare(`
+          INSERT INTO construction_records (
+            construction_date, client_company, customer_name, customer_phone,
+            site_address, address_detail, special_notes, settlement_status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        insertConstruction.run(
+          data.confirmed_construction_date,
+          data.client_company,
+          data.customer_name,
+          data.customer_phone || '',
+          data.site_address,
+          data.address_detail || '',
+          `실측에서 자동 등록 (실측ID: ${measurementId})`,
+          '시공 예정'
+        );
+
+        console.log(`✅ 시공일 ${data.confirmed_construction_date} 자동 등록 완료 (고객: ${data.customer_name})`);
+      } else {
+        console.log(`ℹ️ 시공일 ${data.confirmed_construction_date} 이미 등록됨 (고객: ${data.customer_name})`);
+      }
+    }
+
+    res.json({ success: true, id: measurementId });
   } catch (error) {
     console.error('❌ 실측 요청 등록 에러:', error);
     res.status(500).json({ error: error.message });
@@ -615,7 +651,7 @@ app.put('/api/measurements/:id', (req, res) => {
     );
 
     // 시공일이 확정된 경우 자동으로 시공 스케줄에 추가
-    if (data.confirmed_construction_date && data.status === 'scheduled') {
+    if (data.confirmed_construction_date) {
       // 이미 시공 등록이 있는지 확인
       const existingRecord = db.prepare(
         'SELECT id FROM construction_records WHERE customer_name = ? AND construction_date = ?'
@@ -641,7 +677,9 @@ app.put('/api/measurements/:id', (req, res) => {
           '시공 예정'
         );
 
-        console.log(`✅ 시공일 ${data.confirmed_construction_date} 자동 등록 완료`);
+        console.log(`✅ 시공일 ${data.confirmed_construction_date} 자동 등록 완료 (고객: ${data.customer_name})`);
+      } else {
+        console.log(`ℹ️ 시공일 ${data.confirmed_construction_date} 이미 등록됨 (고객: ${data.customer_name})`);
       }
     }
 
