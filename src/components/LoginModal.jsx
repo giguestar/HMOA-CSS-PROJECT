@@ -10,9 +10,9 @@ export default function LoginModal({ onLogin, onClose }) {
   // 사전 정의된 계정 목록
   const accounts = [
     { username: 'admin', display_name: '관리자', icon: '👑', color: 'bg-purple-500' },
-    { username: 'lee_sangmu', display_name: '이상무', icon: '👨‍💼', color: 'bg-blue-500' },
-    { username: 'jung_hogyu', display_name: '정호규', icon: '👨‍💼', color: 'bg-green-500' },
-    { username: 'kim_namgun', display_name: '김남군', icon: '👨‍💼', color: 'bg-orange-500' }
+    { username: 'lee', display_name: '이상무', icon: '👨‍💼', color: 'bg-blue-500' },
+    { username: 'jung', display_name: '정호규', icon: '👨‍💼', color: 'bg-green-500' },
+    { username: 'kim', display_name: '김남군', icon: '👨‍💼', color: 'bg-orange-500' }
   ];
 
   const handleAccountSelect = (accountUsername) => {
@@ -149,7 +149,7 @@ export default function LoginModal({ onLogin, onClose }) {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-700 text-center">
               💡 <strong>비밀번호 안내:</strong><br/>
-              관리자: admin1234 / 매니저: 이름1234 (예: lee1234)
+              관리자: admin1234 / 이상무: l1234 / 정호규: j1234 / 김남군: k1234
             </p>
           </div>
         </div>

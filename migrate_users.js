@@ -40,20 +40,20 @@ try {
       display_name: '관리자'
     },
     {
-      username: 'lee_sangmu',
-      password: 'lee1234',
+      username: 'lee',
+      password: 'l1234',
       role: 'manager',
       display_name: '이상무'
     },
     {
-      username: 'jung_hogyu',
-      password: 'jung1234',
+      username: 'jung',
+      password: 'j1234',
       role: 'manager',
       display_name: '정호규'
     },
     {
-      username: 'kim_namgun',
-      password: 'kim1234',
+      username: 'kim',
+      password: 'k1234',
       role: 'manager',
       display_name: '김남군'
     }
@@ -64,9 +64,16 @@ try {
     VALUES (?, ?, ?, ?)
   `);
 
+  const updateUser = db.prepare(`
+    UPDATE users SET password = ?, display_name = ? WHERE username = ?
+  `);
+
   for (const user of users) {
     if (existingUsernames.includes(user.username)) {
-      console.log(`⏭️  ${user.display_name} (${user.username}) - 이미 존재함`);
+      // 이미 존재하면 업데이트
+      const hashedPassword = bcrypt.hashSync(user.password, 10);
+      updateUser.run(hashedPassword, user.display_name, user.username);
+      console.log(`🔄 ${user.display_name} (${user.username}) - 계정 정보 업데이트`);
       continue;
     }
 
@@ -134,9 +141,9 @@ try {
   console.log('│ 사용자명     │ 아이디        │ 비밀번호  │');
   console.log('├─────────────┼──────────────┼──────────┤');
   console.log('│ 관리자       │ admin        │ admin1234│');
-  console.log('│ 이상무       │ lee_sangmu   │ lee1234  │');
-  console.log('│ 정호규       │ jung_hogyu   │ jung1234 │');
-  console.log('│ 김남군       │ kim_namgun   │ kim1234  │');
+  console.log('│ 이상무       │ lee          │ l1234    │');
+  console.log('│ 정호규       │ jung         │ j1234    │');
+  console.log('│ 김남군       │ kim          │ k1234    │');
   console.log('└─────────────┴──────────────┴──────────┘');
 
 } catch (error) {
