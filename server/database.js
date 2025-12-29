@@ -10,6 +10,33 @@ const db = new Database(join(__dirname, 'construction.db'));
 // 데이터베이스 초기화
 export function initDatabase() {
   try {
+    // 0. 사용자 테이블 (로그인)
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now', 'localtime'))
+      )
+    `);
+
+    // 기본 사용자 데이터 삽입 (없을 경우)
+    const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
+    if (userCount.count === 0) {
+      const insertUser = db.prepare(`
+        INSERT INTO users (username, password, role, display_name)
+        VALUES (?, ?, ?, ?)
+      `);
+      
+      insertUser.run('admin', 'admin1234', 'admin', '관리자');
+      insertUser.run('manager1', 'manager1234', 'manager', '매니저1');
+      insertUser.run('viewer', 'viewer1234', 'viewer', '뷰어');
+      
+      console.log('✅ 기본 사용자 생성 완료');
+    }
+
     // 1. 시공내역 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS construction_records (
