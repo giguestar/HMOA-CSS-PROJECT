@@ -90,7 +90,7 @@ app.get('/api/auth/me', (req, res) => {
       return res.status(401).json({ error: '인증이 필요합니다.' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
     if (!user) {
       return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
