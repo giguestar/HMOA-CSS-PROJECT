@@ -33,6 +33,9 @@ export function initDatabase() {
       insertUser.run('admin', 'admin1234', 'admin', '관리자');
       insertUser.run('manager1', 'manager1234', 'manager', '매니저1');
       insertUser.run('viewer', 'viewer1234', 'viewer', '뷰어');
+      insertUser.run('lee', 'l1234', 'manager', '이상무');
+      insertUser.run('jung', 'j1234', 'manager', '정호규');
+      insertUser.run('kim', 'k1234', 'manager', '김남군');
       
       console.log('✅ 기본 사용자 생성 완료');
     }
