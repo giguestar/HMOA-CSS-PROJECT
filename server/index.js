@@ -1157,52 +1157,6 @@ app.put('/api/settlements/:id', (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-      data.team || '',
-      data.billing_standard_cost || 0,
-      data.billing_frame_count || 0,
-      data.billing_protection_cost || 0,
-      data.billing_demolition_cost || 0,
-      data.billing_equipment_cost || 0,
-      data.billing_molding_cost || 0,
-      data.billing_tile_cost || 0,
-      data.billing_other_cost || 0,
-      data.billing_measurement_cost || 0,
-      data.billing_total_amount || 0,
-      data.payment_standard_cost || 0,
-      data.payment_protection_cost || 0,
-      data.payment_demolition_cost || 0,
-      data.payment_equipment_cost || 0,
-      data.payment_molding_cost || 0,
-      data.payment_tile_cost || 0,
-      data.payment_other_cost || 0,
-      data.payment_measurement_cost || 0,
-      data.payment_total_amount || 0,
-      data.profit_amount || 0,
-      data.profit_rate || 0,
-      data.custom_order_company || '',
-      data.custom_order_desc || '',
-      data.custom_order_amount || 0,
-      data.customer_extra_charge_desc || '',
-      data.customer_extra_charge_amount || 0,
-      data.cash_payment || 0,
-      data.cash_amount || 0,
-      data.settlement_period || '',
-      data.settlement_date || null,
-      data.billing_notes || '',
-      data.payment_notes || '',
-      data.payment_diff_notes || '',
-      data.customer_notes || '',
-      data.site_notes || '',
-      req.params.id
-    );
-    
-    console.log(`✅ 정산 수정: ID ${req.params.id}`);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('❌ 정산 수정 에러:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // 정산 삭제
 app.delete('/api/settlements/:id', (req, res) => {
