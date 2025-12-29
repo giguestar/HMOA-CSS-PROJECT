@@ -98,23 +98,7 @@ export function initDatabase() {
       )
     `);
 
-    // 3. 정산 관리 테이블
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS settlements (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        client_company TEXT NOT NULL,
-        settlement_period_start TEXT NOT NULL,
-        settlement_period_end TEXT NOT NULL,
-        settlement_due_date TEXT NOT NULL,
-        total_amount INTEGER DEFAULT 0,
-        payment_received BOOLEAN DEFAULT 0,
-        payment_date TEXT,
-        notes TEXT,
-        created_at TEXT DEFAULT (datetime('now', 'localtime'))
-      )
-    `);
-
-    // 4. 업체 설정 테이블
+    // 3. 업체 설정 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS company_settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125,7 +109,7 @@ export function initDatabase() {
       )
     `);
 
-    // 5. 시공팀 설정 테이블
+    // 4. 시공팀 설정 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS team_settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,7 +120,7 @@ export function initDatabase() {
       )
     `);
 
-    // 6. 달력 노트 테이블 (휴가자, 일당, 쉬는 팀)
+    // 5. 달력 노트 테이블 (휴가자, 일당, 쉬는 팀)
     db.exec(`
       CREATE TABLE IF NOT EXISTS calendar_notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -148,7 +132,7 @@ export function initDatabase() {
       )
     `);
 
-    // 7. 실측 요청 테이블
+    // 6. 실측 요청 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS measurement_requests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -173,7 +157,7 @@ export function initDatabase() {
       )
     `);
 
-    // 5. 정산 마스터 테이블 (settlements)
+    // 7. 정산 마스터 테이블 (settlements)
     db.exec(`
       CREATE TABLE IF NOT EXISTS settlements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -193,17 +177,23 @@ export function initDatabase() {
         billing_standard_cost INTEGER DEFAULT 0,
         billing_frame_count INTEGER DEFAULT 0,
         billing_protection_cost INTEGER DEFAULT 0,
+        billing_demolition_qty INTEGER DEFAULT 0,
+        billing_demolition_unit_price INTEGER DEFAULT 40000,
         billing_demolition_cost INTEGER DEFAULT 0,
+        billing_equipment_desc TEXT,
         billing_equipment_cost INTEGER DEFAULT 0,
         billing_molding_cost INTEGER DEFAULT 0,
         billing_tile_cost INTEGER DEFAULT 0,
         billing_other_cost INTEGER DEFAULT 0,
         billing_measurement_cost INTEGER DEFAULT 0,
         billing_total_amount INTEGER DEFAULT 0,
+        billing_additional_items TEXT, -- JSON array
         
         -- 지급 금액 (외주팀에 지급)
         payment_standard_cost INTEGER DEFAULT 0,
         payment_protection_cost INTEGER DEFAULT 0,
+        payment_demolition_qty INTEGER DEFAULT 0,
+        payment_demolition_unit_price INTEGER DEFAULT 40000,
         payment_demolition_cost INTEGER DEFAULT 0,
         payment_equipment_cost INTEGER DEFAULT 0,
         payment_molding_cost INTEGER DEFAULT 0,
@@ -211,6 +201,7 @@ export function initDatabase() {
         payment_other_cost INTEGER DEFAULT 0,
         payment_measurement_cost INTEGER DEFAULT 0,
         payment_total_amount INTEGER DEFAULT 0,
+        payment_additional_items TEXT, -- JSON array
         
         -- 수익 계산
         profit_amount INTEGER DEFAULT 0,
@@ -220,12 +211,17 @@ export function initDatabase() {
         custom_order_company TEXT,
         custom_order_desc TEXT,
         custom_order_amount INTEGER DEFAULT 0,
+        custom_order_items TEXT, -- JSON array
+        
+        -- 고객 원수금 내역
+        customer_direct_items TEXT, -- JSON array
         
         -- 고객 추가 청구
         customer_extra_charge_desc TEXT,
         customer_extra_charge_amount INTEGER DEFAULT 0,
         
         -- 현금 수금
+        is_cash_payment BOOLEAN DEFAULT 0,
         cash_payment BOOLEAN DEFAULT 0,
         cash_amount INTEGER DEFAULT 0,
         
@@ -256,7 +252,7 @@ export function initDatabase() {
       )
     `);
 
-    // 6. 회사별 정산 설정 테이블
+    // 8. 회사별 정산 설정 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS client_settlement_config (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -286,7 +282,7 @@ export function initDatabase() {
       )
     `);
 
-    // 7. 외주팀 비율 설정 테이블
+    // 9. 외주팀 비율 설정 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS outsource_rates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -306,7 +302,7 @@ export function initDatabase() {
       )
     `);
 
-    // 8. 월별 정산 요약 테이블
+    // 10. 월별 정산 요약 테이블
     db.exec(`
       CREATE TABLE IF NOT EXISTS settlement_summary (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
