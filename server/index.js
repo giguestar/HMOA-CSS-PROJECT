@@ -54,15 +54,15 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(400).json({ error: '사용자명과 비밀번호를 입력해주세요.' });
     }
 
-    // 사용자 조회
-    const user = db.prepare('SELECT * FROM users WHERE username = ? AND is_active = 1').get(username);
+    // 사용자 조회 (is_active 컬럼 제거)
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
     if (!user) {
       return res.status(401).json({ error: '사용자를 찾을 수 없습니다.' });
     }
 
-    // 비밀번호 확인
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
+    // 비밀번호 확인 (평문 비교)
+    const isPasswordValid = password === user.password;
 
     if (!isPasswordValid) {
       return res.status(401).json({ error: '비밀번호가 일치하지 않습니다.' });
