@@ -6,7 +6,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
-    allowedHosts: ['all'],
+    strictPort: false,
+    allowedHosts: [
+      'all',
+      '.sandbox.novita.ai',
+      '3000-i1n2c951nczu9isc6assz-dfc00ec5.sandbox.novita.ai',
+      'localhost',
+      '127.0.0.1'
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -14,6 +21,9 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path
       }
+    },
+    hmr: {
+      clientPort: 3000
     }
   }
 });
