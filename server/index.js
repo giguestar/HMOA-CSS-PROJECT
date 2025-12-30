@@ -461,8 +461,7 @@ app.get('/api/dashboard/stats', (req, res) => {
 
     const stats = {
       thisMonth: db.prepare(`
-        SELECT COUNT(*) as count, 
-               SUM(standard_cost + protection_cost + demolition_cost + equipment_cost) as revenue
+        SELECT COUNT(*) as count
         FROM construction_records
         WHERE strftime('%Y-%m', construction_date) = ?
       `).get(currentMonth),

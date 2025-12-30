@@ -73,17 +73,18 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 이번 달 매출 */}
+        {/* 이번 달 시공 건수 */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">이번 달 매출</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {formatCurrency(stats?.thisMonth?.revenue)}
+              <p className="text-sm font-medium text-gray-600">이번 달 시공</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">
+                {stats?.thisMonth?.count || 0}
+                <span className="text-lg font-normal text-gray-600 ml-2">건</span>
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <span className="text-2xl">💰</span>
+              <span className="text-2xl">🔨</span>
             </div>
           </div>
         </div>
