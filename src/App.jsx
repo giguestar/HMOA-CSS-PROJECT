@@ -22,11 +22,16 @@ function App() {
   // console.log('🎬 App 렌더링:', { userRole, showLogin, currentUser: currentUser?.username });
 
   const handleLogin = (role, user) => {
+    console.log('🔐 handleLogin 호출됨:', { role, user });
     setUserRole(role);
     setCurrentUser(user);
     setShowLogin(false);
     localStorage.setItem('userRole', role);
     localStorage.setItem('user', JSON.stringify(user));
+    console.log('✅ localStorage 저장 완료:', {
+      userRole: localStorage.getItem('userRole'),
+      user: localStorage.getItem('user')
+    });
   };
 
   const handleLogout = () => {
