@@ -166,12 +166,11 @@ app.post('/api/records', (req, res) => {
       INSERT INTO construction_records (
         construction_date, client_company, customer_name, customer_phone, special_notes,
         is_resident, site_address, address_detail, building_unit, frame_count, team, settlement_status,
-        standard_cost, protection_cost, demolition_qty, demolition_cost,
-        equipment_desc, equipment_cost, equipment_provider, demolition_team, measurement_cost,
+        demolition_qty, equipment_desc, equipment_provider, demolition_team,
         has_railing, has_security_window, has_roll_screen, has_louver,
         has_molding, has_tile, has_molding_tile, needs_fabrication,
-        outsource_total_cost, actual_settlement, remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        remarks
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insert.run(
@@ -187,15 +186,10 @@ app.post('/api/records', (req, res) => {
       data.frame_count || 0,
       data.team,
       data.settlement_status || '',
-      data.standard_cost || 0,
-      data.protection_cost || 0,
       data.demolition_qty || 0,
-      data.demolition_cost || 0,
       data.equipment_desc,
-      data.equipment_cost || 0,
       data.equipment_provider || '직영',
       data.demolition_team || '시공팀',
-      data.measurement_cost || 0,
       data.has_railing ? 1 : 0,
       data.has_security_window ? 1 : 0,
       data.has_roll_screen ? 1 : 0,
@@ -204,8 +198,6 @@ app.post('/api/records', (req, res) => {
       data.has_tile ? 1 : 0,
       data.has_molding_tile ? 1 : 0,
       data.needs_fabrication ? 1 : 0,
-      data.outsource_total_cost || 0,
-      data.actual_settlement || 0,
       data.remarks
     );
 
@@ -239,12 +231,9 @@ app.put('/api/records/:id', (req, res) => {
         construction_date = ?, client_company = ?, customer_name = ?, customer_phone = ?,
         special_notes = ?, is_resident = ?, site_address = ?, address_detail = ?,
         building_unit = ?, frame_count = ?, team = ?, settlement_status = ?,
-        standard_cost = ?, protection_cost = ?, demolition_qty = ?,
-        demolition_cost = ?, equipment_desc = ?, equipment_cost = ?,
-        equipment_provider = ?, demolition_team = ?, measurement_cost = ?,
+        demolition_qty = ?, equipment_desc = ?, equipment_provider = ?, demolition_team = ?,
         has_railing = ?, has_security_window = ?, has_roll_screen = ?, has_louver = ?,
         has_molding = ?, has_tile = ?, has_molding_tile = ?, needs_fabrication = ?,
-        outsource_total_cost = ?, actual_settlement = ?,
         remarks = ?, updated_at = datetime('now', 'localtime')
       WHERE id = ?
     `);
@@ -262,15 +251,10 @@ app.put('/api/records/:id', (req, res) => {
       data.frame_count || 0,
       data.team,
       data.settlement_status,
-      data.standard_cost || 0,
-      data.protection_cost || 0,
       data.demolition_qty || 0,
-      data.demolition_cost || 0,
       data.equipment_desc,
-      data.equipment_cost || 0,
       data.equipment_provider || '직영',
       data.demolition_team || '시공팀',
-      data.measurement_cost || 0,
       data.has_railing ? 1 : 0,
       data.has_security_window ? 1 : 0,
       data.has_roll_screen ? 1 : 0,
@@ -279,8 +263,6 @@ app.put('/api/records/:id', (req, res) => {
       data.has_tile ? 1 : 0,
       data.has_molding_tile ? 1 : 0,
       data.needs_fabrication ? 1 : 0,
-      data.outsource_total_cost || 0,
-      data.actual_settlement || 0,
       data.remarks,
       req.params.id
     );
