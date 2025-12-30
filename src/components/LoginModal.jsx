@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../api';
 
 export default function LoginModal({ onLogin, onClose }) {
@@ -92,8 +93,8 @@ export default function LoginModal({ onLogin, onClose }) {
   const selectedAccount = accounts.find(acc => acc.username === username);
   const isAdminMode = username === 'admin';
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[9999]">
+  return createPortal(
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[9999]" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl border-4 border-blue-500">
         <h2 className="text-2xl font-bold mb-2 text-center text-gray-800">해모아 시공 관리</h2>
         <p className="text-sm text-gray-500 text-center mb-6">로그인하여 시스템에 접속하세요</p>
@@ -219,6 +220,7 @@ export default function LoginModal({ onLogin, onClose }) {
           animation: fadeIn 0.3s ease-out;
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }
