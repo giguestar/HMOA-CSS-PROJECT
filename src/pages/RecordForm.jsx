@@ -151,13 +151,51 @@ export default function RecordForm() {
     setLoading(true);
 
     try {
-      // 백엔드 API에 맞게 필드명 변환
+      // 백엔드 API에 맞게 필드명 변환 및 불필요한 필드 제거
       const submitData = {
-        ...formData,
-        address_detail: formData.site_detail || '', // site_detail → address_detail
-        // site_detail 제거
+        construction_date: formData.construction_date,
+        client_company: formData.client_company,
+        customer_name: formData.customer_name,
+        customer_phone: formData.customer_phone,
+        special_notes: formData.special_notes,
+        is_resident: formData.is_resident,
+        site_address: formData.site_address,
+        address_detail: formData.site_detail || '',
+        building_unit: formData.building_unit,
+        frame_count: formData.frame_count || 0,
+        team: formData.team,
+        settlement_status: '',
+        
+        // 철거/장비 정보
+        demolition_qty: 0,
+        demolition_cost: 0,
+        equipment_desc: formData.equipment_desc || '',
+        equipment_cost: 0,
+        equipment_provider: formData.equipment_provider || '직영',
+        demolition_team: formData.demolition_team || '시공팀',
+        
+        // 청구/지급 금액 (시공등록에서는 0으로)
+        standard_cost: 0,
+        protection_cost: 0,
+        measurement_cost: 0,
+        outsource_total_cost: 0,
+        actual_settlement: 0,
+        
+        // 주문제작 항목
+        has_railing: formData.has_railing || false,
+        has_security_window: formData.has_security_window || false,
+        has_roll_screen: formData.has_roll_screen || false,
+        has_louver: formData.has_louver || false,
+        has_molding: formData.has_molding || false,
+        has_tile: formData.has_tile || false,
+        has_molding_tile: false,
+        needs_fabrication: formData.needs_fabrication || false,
+        
+        remarks: formData.remarks || '',
+        
+        // 부가작업
+        additionalWorks: formData.additionalWorks || []
       };
-      delete submitData.site_detail;
 
       if (id) {
         await api.put(`/api/records/${id}`, submitData);
