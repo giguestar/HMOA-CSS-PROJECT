@@ -49,6 +49,9 @@ export default function RecordForm() {
     has_louver: false,
     needs_fabrication: false,
     
+    // 부가작업
+    additionalWorks: [],
+    
     // 부가시공비
     crane_cost: 0,
     ladder_jg_cost: 0,
