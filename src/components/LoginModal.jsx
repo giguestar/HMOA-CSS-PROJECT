@@ -7,6 +7,8 @@ export default function LoginModal({ onLogin, onClose }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // console.log('🔐 LoginModal 렌더링됨!');
+
   // 사전 정의된 계정 목록
   const accounts = [
     { username: 'admin', display_name: '관리자', icon: '👑', color: 'bg-purple-500', needPassword: true },
@@ -91,8 +93,8 @@ export default function LoginModal({ onLogin, onClose }) {
   const isAdminMode = username === 'admin';
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[9999]">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl border-4 border-blue-500">
         <h2 className="text-2xl font-bold mb-2 text-center text-gray-800">해모아 시공 관리</h2>
         <p className="text-sm text-gray-500 text-center mb-6">로그인하여 시스템에 접속하세요</p>
         

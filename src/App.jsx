@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Dashboard from './pages/Dashboard';
 import RecordForm from './pages/RecordForm';
@@ -19,6 +19,8 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null); // 사용자 정보 객체
   const [showLogin, setShowLogin] = useState(true);
 
+  // console.log('🎬 App 렌더링:', { userRole, showLogin, currentUser: currentUser?.username });
+
   const handleLogin = (role, user) => {
     setUserRole(role);
     setCurrentUser(user);
@@ -38,10 +40,39 @@ function App() {
   useEffect(() => {
     const savedRole = localStorage.getItem('userRole');
     const savedUser = localStorage.getItem('user');
-    if (savedRole && savedUser) {
-      setUserRole(savedRole);
-      setCurrentUser(JSON.parse(savedUser));
-      setShowLogin(false);
+    
+    console.log('🔍 localStorage 확인:', { savedRole, savedUser });
+    
+    // localStorage에 유효한 데이터가 있을 때만 자동 로그인
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        console.log('👤 복원된 사용자:', user);
+        console.log('🎭 user.role:', user.role);
+        console.log('🎭 savedRole:', savedRole);
+        
+        if (user && user.username && user.role) {
+          // user 객체의 role을 우선 사용 (더 신뢰할 수 있음)
+          const roleToUse = user.role || savedRole;
+          console.log('✅ 사용할 역할:', roleToUse);
+          
+          setUserRole(roleToUse);
+          setCurrentUser(user);
+          setShowLogin(false);
+        } else {
+          // 잘못된 데이터면 초기화
+          console.log('❌ 잘못된 사용자 데이터, 초기화');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('user');
+        }
+      } catch (e) {
+        // JSON 파싱 에러면 초기화
+        console.log('❌ JSON 파싱 에러, 초기화:', e);
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('user');
+      }
+    } else {
+      console.log('ℹ️ localStorage 비어있음, 로그인 필요');
     }
   }, []);
 
@@ -118,19 +149,52 @@ function App() {
             <Route path="/" element={<Dashboard userRole={userRole} />} />
             
             {/* 관리자 전용 라우트 */}
-            <Route path="/record/new" element={userRole === 'admin' ? <RecordForm /> : <Dashboard userRole={userRole} />} />
-            <Route path="/records" element={userRole === 'admin' ? <RecordList /> : <Dashboard userRole={userRole} />} />
-            <Route path="/settlements" element={userRole === 'admin' ? <SettlementList /> : <Dashboard userRole={userRole} />} />
-            <Route path="/settlements/new" element={userRole === 'admin' ? <SettlementForm /> : <Dashboard userRole={userRole} />} />
-            <Route path="/settlements/edit/:id" element={userRole === 'admin' ? <SettlementForm /> : <Dashboard userRole={userRole} />} />
-            <Route path="/vendor-stats" element={userRole === 'admin' ? <VendorStats /> : <Dashboard userRole={userRole} />} />
-            <Route path="/settlement" element={userRole === 'admin' ? <Settlement /> : <Dashboard userRole={userRole} />} />
+            <Route 
+              path="/record/new" 
+              element={userRole === 'admin' ? <RecordForm /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/records" 
+              element={userRole === 'admin' ? <RecordList /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/settlements" 
+              element={userRole === 'admin' ? <SettlementList /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/settlements/new" 
+              element={userRole === 'admin' ? <SettlementForm /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/settlements/edit/:id" 
+              element={userRole === 'admin' ? <SettlementForm /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/vendor-stats" 
+              element={userRole === 'admin' ? <VendorStats /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/settlement" 
+              element={userRole === 'admin' ? <Settlement /> : <Navigate to="/" replace />} 
+            />
             
             {/* 관리자 + 매니저 공통 라우트 */}
-            <Route path="/measurements" element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementList /> : <Dashboard userRole={userRole} />} />
-            <Route path="/measurements/new" element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementForm /> : <Dashboard userRole={userRole} />} />
-            <Route path="/measurements/edit/:id" element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementForm /> : <Dashboard userRole={userRole} />} />
-            <Route path="/record/edit/:id" element={(userRole === 'admin' || userRole === 'manager') ? <RecordForm /> : <Dashboard userRole={userRole} />} />
+            <Route 
+              path="/measurements" 
+              element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementList /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/measurements/new" 
+              element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementForm /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/measurements/edit/:id" 
+              element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementForm /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+              path="/record/edit/:id" 
+              element={(userRole === 'admin' || userRole === 'manager') ? <RecordForm /> : <Navigate to="/" replace />} 
+            />
             
             {/* 모든 사용자 접근 가능 */}
             <Route path="/measurement-schedule" element={<MeasurementSchedule userRole={userRole} />} />

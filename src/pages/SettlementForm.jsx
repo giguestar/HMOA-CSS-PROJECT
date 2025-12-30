@@ -34,6 +34,17 @@ export default function SettlementForm() {
     equipment_cost: 0,
     equipment_hours: 0, // 장비 사용 시간
     equipment_minutes: 0, // 장비 사용 분 (10분 단위)
+    // 시공 데이터 연동 필드
+    equipment_provider: '직영',
+    equipment_vendor: '',
+    demolition_team: '시공팀',
+    has_molding: false,
+    has_tile: false,
+    has_louver: false,
+    has_security_window: false,
+    has_roll_screen: false,
+    has_railing: false,
+    needs_fabrication: false,
     additional_items: Array(5).fill({ name: '', amount: 0 })
   });
 
@@ -118,7 +129,21 @@ export default function SettlementForm() {
         ...prev,
         equipment_desc: record.equipment_desc || '',
         demolition_qty: record.demolition_qty || 0,
-        demolition_unit_price: record.demolition_unit_price || 40000
+        demolition_unit_price: record.demolition_unit_price || 40000,
+        // 장비업체 정보
+        equipment_provider: record.equipment_provider || '직영',
+        equipment_vendor: record.equipment_vendor || '',
+        // 철거팀 정보
+        demolition_team: record.demolition_team || '시공팀',
+        // 몰딩/타일 여부
+        has_molding: record.has_molding || false,
+        has_tile: record.has_tile || false,
+        // 주문제작 항목
+        has_louver: record.has_louver || false,
+        has_security_window: record.has_security_window || false,
+        has_roll_screen: record.has_roll_screen || false,
+        has_railing: record.has_railing || false,
+        needs_fabrication: record.needs_fabrication || false
       }));
 
       alert('시공 데이터를 불러왔습니다. 청구금액과 지급금액을 입력해주세요.');

@@ -9,6 +9,8 @@ export default function RecordForm() {
   const [companies, setCompanies] = useState([]);
   const [teams, setTeams] = useState([]);
 
+  // console.log('🏗️ RecordForm 렌더링됨!', { id });
+
   const [scheduleWorkTypes] = useState([
     '난간대', '방범창', '몰딩', '타일', '롤망', '루버'
   ]);
@@ -400,23 +402,23 @@ export default function RecordForm() {
             </div>
           </section>
 
-          {/* 스케줄 표기 작업 */}
+          {/* 주문제작 시공 항목 */}
           <section className="border-b pb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">📋 스케줄 표기 작업</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">🔧 주문제작 시공 항목</h2>
             <p className="text-sm text-gray-600 mb-4">
-              체크한 항목은 스케줄표에 색상으로 표기됩니다.
+              루버, 방범창, 롤망, 난간대 등 주문제작 필요한 항목을 선택하세요.
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
                 <input
                   type="checkbox"
-                  name="has_railing"
-                  checked={formData.has_railing}
+                  name="has_louver"
+                  checked={formData.has_louver}
                   onChange={handleChange}
                   className="mr-2 w-4 h-4"
                 />
-                <span className="text-orange-700 font-medium">난간대</span>
+                <span className="text-orange-700 font-medium">루버</span>
               </label>
 
               <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
@@ -444,14 +446,24 @@ export default function RecordForm() {
               <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
                 <input
                   type="checkbox"
-                  name="has_louver"
-                  checked={formData.has_louver}
+                  name="has_railing"
+                  checked={formData.has_railing}
                   onChange={handleChange}
                   className="mr-2 w-4 h-4"
                 />
-                <span className="text-orange-700 font-medium">루버</span>
+                <span className="text-orange-700 font-medium">난간대</span>
               </label>
+            </div>
+          </section>
 
+          {/* 몰딩/타일 여부 */}
+          <section className="border-b pb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">🎨 몰딩/타일 여부</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              몰딩과 타일을 동시에 체크하면 <strong>"몰.타"</strong>로 표기됩니다.
+            </p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
                 <input
                   type="checkbox"
@@ -473,27 +485,30 @@ export default function RecordForm() {
                 />
                 <span className="text-purple-700 font-medium">타일</span>
               </label>
+            </div>
 
-              <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
-                <input
-                  type="checkbox"
-                  name="has_molding_tile"
-                  checked={formData.has_molding_tile}
-                  onChange={handleChange}
-                  className="mr-2 w-4 h-4"
-                />
-                <span className="text-purple-700 font-medium">몰+타</span>
-              </label>
+            {/* 몰.타 표시 */}
+            {formData.has_molding && formData.has_tile && (
+              <div className="mt-4 p-3 bg-purple-100 border-2 border-purple-400 rounded-md">
+                <p className="text-purple-800 font-bold text-center">✨ 선택된 항목: 몰.타</p>
+              </div>
+            )}
+          </section>
 
-              <label className="flex items-center p-3 border-2 border-red-300 bg-red-50 rounded-md cursor-pointer hover:bg-red-100">
+          {/* 제작창 (현금수금) */}
+          <section className="border-b pb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">💰 제작창 (현금수금)</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="flex items-center p-4 border-2 border-red-300 bg-red-50 rounded-md cursor-pointer hover:bg-red-100">
                 <input
                   type="checkbox"
                   name="needs_fabrication"
                   checked={formData.needs_fabrication}
                   onChange={handleChange}
-                  className="mr-2 w-4 h-4"
+                  className="mr-3 w-5 h-5"
                 />
-                <span className="text-red-700 font-medium">제작창 (현금수금)</span>
+                <span className="text-red-700 font-medium text-lg">제작창 (현금수금)</span>
               </label>
             </div>
           </section>
