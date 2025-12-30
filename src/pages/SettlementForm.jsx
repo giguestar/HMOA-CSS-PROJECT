@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import api from '../api';
 
 export default function SettlementForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const recordId = searchParams.get('recordId');
   const isEditMode = !!id;
 
   // 기본 정보
@@ -30,6 +32,8 @@ export default function SettlementForm() {
     demolition_unit_price: 40000,
     equipment_desc: '',
     equipment_cost: 0,
+    equipment_hours: 0, // 장비 사용 시간
+    equipment_minutes: 0, // 장비 사용 분 (10분 단위)
     additional_items: Array(5).fill({ name: '', amount: 0 })
   });
 
@@ -69,8 +73,11 @@ export default function SettlementForm() {
     fetchTeams();
     if (isEditMode) {
       fetchSettlement();
+    } else if (recordId) {
+      // 시공 데이터를 불러와서 정산 폼에 자동 채우기
+      fetchConstructionRecord(recordId);
     }
-  }, [id]);
+  }, [id, recordId]);
 
   const fetchCompanies = async () => {
     try {
@@ -87,6 +94,37 @@ export default function SettlementForm() {
       setTeams(response.data);
     } catch (error) {
       console.error('팀 조회 실패:', error);
+    }
+  };
+
+  const fetchConstructionRecord = async (recordId) => {
+    try {
+      const response = await api.get(`/api/records/${recordId}`);
+      const record = response.data;
+      
+      // 기본 정보 자동 채우기
+      setBasicInfo({
+        construction_date: record.construction_date || new Date().toISOString().split('T')[0],
+        client_company: record.client_company || '',
+        customer_name: record.customer_name || '',
+        site_address: record.site_address || '',
+        team: record.team || '',
+        is_cash_payment: false,
+        settlement_date: ''
+      });
+
+      // 청구분 정보 자동 채우기 (시공등록 데이터 활용)
+      setBilling(prev => ({
+        ...prev,
+        equipment_desc: record.equipment_desc || '',
+        demolition_qty: record.demolition_qty || 0,
+        demolition_unit_price: record.demolition_unit_price || 40000
+      }));
+
+      alert('시공 데이터를 불러왔습니다. 청구금액과 지급금액을 입력해주세요.');
+    } catch (error) {
+      console.error('시공 데이터 조회 실패:', error);
+      alert('시공 데이터를 불러오지 못했습니다.');
     }
   };
 
@@ -116,6 +154,8 @@ export default function SettlementForm() {
         demolition_unit_price: data.billing_demolition_unit_price || 40000,
         equipment_desc: data.billing_equipment_desc || '',
         equipment_cost: data.billing_equipment_cost || 0,
+        equipment_hours: data.billing_equipment_hours || 0,
+        equipment_minutes: data.billing_equipment_minutes || 0,
         additional_items: JSON.parse(data.billing_additional_items || '[]')
       });
 
@@ -297,6 +337,8 @@ export default function SettlementForm() {
       billing_demolition_unit_price: billing.demolition_unit_price,
       billing_equipment_desc: billing.equipment_desc,
       billing_equipment_cost: billing.equipment_cost,
+      billing_equipment_hours: billing.equipment_hours || 0,
+      billing_equipment_minutes: billing.equipment_minutes || 0,
       billing_total_amount: billingTotal,
       billing_additional_items: JSON.stringify(billing.additional_items),
 
@@ -704,14 +746,50 @@ export default function SettlementForm() {
                       type="text"
                       value={billing.equipment_desc}
                       onChange={(e) => handleBillingChange('equipment_desc', e.target.value)}
-                      className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md mb-1"
-                      placeholder="예: 사다리 40분"
+                      className="w-full px-3 py-1 text-sm border border-gray-300 rounded-md mb-2"
+                      placeholder="예: 사다리, 윈치, 스카이 등"
                     />
+                    
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">사용시간</label>
+                        <select
+                          value={billing.equipment_hours || 0}
+                          onChange={(e) => handleBillingChange('equipment_hours', parseInt(e.target.value))}
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        >
+                          {[0,1,2,3,4,5,6,7,8,9,10,11,12].map(h => (
+                            <option key={h} value={h}>{h}시간</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">사용분</label>
+                        <select
+                          value={billing.equipment_minutes || 0}
+                          onChange={(e) => handleBillingChange('equipment_minutes', parseInt(e.target.value))}
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                        >
+                          {[0,10,20,30,40,50].map(m => (
+                            <option key={m} value={m}>{m}분</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">총 시간</label>
+                        <div className="text-sm px-2 py-1 bg-gray-50 rounded-md border border-gray-200">
+                          {billing.equipment_hours}시간 {billing.equipment_minutes}분
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <label className="block text-xs text-gray-500 mb-1">장비비</label>
                     <input
                       type="number"
                       value={billing.equipment_cost}
                       onChange={(e) => handleBillingChange('equipment_cost', e.target.value)}
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
+                      placeholder="0"
                     />
                   </div>
                 </div>

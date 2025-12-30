@@ -336,86 +336,10 @@ export default function RecordForm() {
             </div>
           </section>
 
-          {/* 청구 금액 */}
+          {/* 시공 세부 정보 */}
           <section className="border-b pb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">💰 청구 금액 (발주업체에 청구)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">표준시공비</label>
-                <input
-                  type="number"
-                  name="standard_cost"
-                  value={formData.standard_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.standard_cost)}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">보양비</label>
-                <input
-                  type="number"
-                  name="protection_cost"
-                  value={formData.protection_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.protection_cost)}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">철거 수량</label>
-                <input
-                  type="number"
-                  name="demolition_qty"
-                  value={formData.demolition_qty || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">철거비</label>
-                <input
-                  type="number"
-                  name="demolition_cost"
-                  value={formData.demolition_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.demolition_cost)}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">장비 내용</label>
-                <input
-                  type="text"
-                  name="equipment_desc"
-                  value={formData.equipment_desc}
-                  onChange={handleChange}
-                  placeholder="도수, 사다리, 윈치, 스카이 등"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">장비비</label>
-                <input
-                  type="number"
-                  name="equipment_cost"
-                  value={formData.equipment_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.equipment_cost)}원</p>
-              </div>
-
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">🔧 시공 세부 정보</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">장비 주체</label>
                 <select
@@ -445,6 +369,18 @@ export default function RecordForm() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">장비 내용</label>
+                <input
+                  type="text"
+                  name="equipment_desc"
+                  value={formData.equipment_desc}
+                  onChange={handleChange}
+                  placeholder="도수, 사다리, 윈치, 스카이 등"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">철거팀</label>
                 <select
                   name="demolition_team"
@@ -456,90 +392,11 @@ export default function RecordForm() {
                   <option value="경산철거">경산철거</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">실측비</label>
-                <input
-                  type="number"
-                  name="measurement_cost"
-                  value={formData.measurement_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.measurement_cost)}원</p>
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="bg-blue-50 p-4 rounded-md">
-                  <p className="text-sm font-medium text-blue-900">
-                    총 청구 금액: <span className="text-xl font-bold">
-                      {formatCurrency(
-                        (formData.standard_cost || 0) + 
-                        (formData.protection_cost || 0) + 
-                        (formData.demolition_cost || 0) + 
-                        (formData.equipment_cost || 0) + 
-                        (formData.measurement_cost || 0)
-                      )}원
-                    </span>
-                  </p>
-                </div>
-              </div>
             </div>
-          </section>
-
-          {/* 지급 금액 */}
-          <section className="border-b pb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">💸 지급 금액 (외주팀에 지급)</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              💡 청구금액과 <strong>다른 경우에만</strong> 입력하세요. 비워두면 청구금액과 동일하게 적용됩니다.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">외주 공사비</label>
-                <input
-                  type="number"
-                  name="outsource_total_cost"
-                  value={formData.outsource_total_cost || ''}
-                  onChange={handleChange}
-                  placeholder="청구금액과 동일 (자동 계산)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(getDisplayPayment())}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">실정산 금액</label>
-                <input
-                  type="number"
-                  name="actual_settlement"
-                  value={formData.actual_settlement || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.actual_settlement)}원</p>
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="bg-green-50 p-4 rounded-md">
-                  <p className="text-sm font-medium text-green-900">
-                    총 지급 금액: <span className="text-xl font-bold">
-                      {formatCurrency(getDisplayPayment())}원
-                    </span>
-                  </p>
-                  <p className="text-xs text-green-700 mt-1">
-                    마진: {formatCurrency(
-                      ((formData.standard_cost || 0) + 
-                      (formData.protection_cost || 0) + 
-                      (formData.demolition_cost || 0) + 
-                      (formData.equipment_cost || 0) + 
-                      (formData.measurement_cost || 0)) - getDisplayPayment()
-                    )}원
-                  </p>
-                </div>
-              </div>
+            <div className="mt-4 p-4 bg-blue-50 rounded-md">
+              <p className="text-sm text-blue-800">
+                💡 <strong>안내:</strong> 청구금액과 지급금액은 정산 작성 시 입력합니다.
+              </p>
             </div>
           </section>
 
