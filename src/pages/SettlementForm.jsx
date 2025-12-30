@@ -51,7 +51,7 @@ export default function SettlementForm() {
 
   // 인임결재 (주문제작)
   const [customOrders, setCustomOrders] = useState(
-    Array(5).fill({ name: '', amount: 0 })
+    Array(5).fill({ name: '', vendor: '', amount: 0 })
   );
 
   // 수동 수정 플래그 (자동 복사 방지용)
@@ -969,10 +969,10 @@ export default function SettlementForm() {
               <div className="mb-4 bg-purple-50 p-3 rounded-lg">
                 <h4 className="text-sm font-semibold text-purple-900 mb-2">💼 인임결재 (기타공사/주문제작 등) (5개)</h4>
                 {customOrders.map((item, index) => (
-                  <div key={index} className="grid grid-cols-2 gap-2 mb-2">
+                  <div key={index} className="grid grid-cols-3 gap-2 mb-2">
                     <input
                       type="text"
-                      placeholder="내용"
+                      placeholder="내용 (예: 몰딩 제작)"
                       value={item.name}
                       onChange={(e) => {
                         const newItems = [...customOrders];
@@ -980,6 +980,17 @@ export default function SettlementForm() {
                         setCustomOrders(newItems);
                       }}
                       className="px-3 py-1 text-sm border border-purple-300 rounded-md"
+                    />
+                    <input
+                      type="text"
+                      placeholder="업체명 (예: OO몰딩)"
+                      value={item.vendor}
+                      onChange={(e) => {
+                        const newItems = [...customOrders];
+                        newItems[index] = { ...item, vendor: e.target.value };
+                        setCustomOrders(newItems);
+                      }}
+                      className="px-3 py-1 text-sm border border-purple-300 rounded-md bg-yellow-50"
                     />
                     <input
                       type="number"

@@ -10,6 +10,7 @@ import MeasurementList from './pages/MeasurementList';
 import MeasurementSchedule from './pages/MeasurementSchedule';
 import SettlementList from './pages/SettlementList';
 import SettlementForm from './pages/SettlementForm';
+import VendorStats from './pages/VendorStats';
 import LoginModal from './components/LoginModal';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
     { name: '월간 스케줄', path: '/schedule', icon: '📅', roles: ['admin', 'manager', 'viewer'] },
     { name: '정산 목록', path: '/settlements', icon: '💰', roles: ['admin'] },
     { name: '정산 작성', path: '/settlements/new', icon: '✨', roles: ['admin'] },
+    { name: '업체별 집계', path: '/vendor-stats', icon: '💼', roles: ['admin'] },
     { name: '정산 계산', path: '/settlement', icon: '📈', roles: ['admin'] },
   ];
 
@@ -122,6 +124,7 @@ function App() {
                 <Route path="/settlements" element={<SettlementList />} />
                 <Route path="/settlements/new" element={<SettlementForm />} />
                 <Route path="/settlements/edit/:id" element={<SettlementForm />} />
+                <Route path="/vendor-stats" element={<VendorStats />} />
                 <Route path="/settlement" element={<Settlement />} />
               </>
             )}

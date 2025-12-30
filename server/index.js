@@ -940,6 +940,84 @@ app.get('/api/settlements', (req, res) => {
   }
 });
 
+// 업체별 인임결재 집계 조회
+app.get('/api/settlements/vendor-stats', (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    let query = 'SELECT * FROM settlements WHERE 1=1';
+    const params = [];
+    
+    if (startDate) {
+      query += ` AND construction_date >= ?`;
+      params.push(startDate);
+    }
+    
+    if (endDate) {
+      query += ` AND construction_date <= ?`;
+      params.push(endDate);
+    }
+    
+    query += ` ORDER BY construction_date DESC`;
+    
+    const settlements = db.prepare(query).all(...params);
+    
+    // 업체별 집계
+    const vendorStats = {};
+    
+    settlements.forEach(settlement => {
+      try {
+        const customOrders = JSON.parse(settlement.custom_order_items || '[]');
+        
+        customOrders.forEach(order => {
+          if (order.vendor && order.amount && Number(order.amount) > 0) {
+            const vendor = order.vendor.trim();
+            
+            if (!vendorStats[vendor]) {
+              vendorStats[vendor] = {
+                vendor: vendor,
+                count: 0,
+                totalAmount: 0,
+                items: []
+              };
+            }
+            
+            vendorStats[vendor].count += 1;
+            vendorStats[vendor].totalAmount += Number(order.amount);
+            vendorStats[vendor].items.push({
+              settlementId: settlement.id,
+              construction_date: settlement.construction_date,
+              client_company: settlement.client_company,
+              customer_name: settlement.customer_name,
+              site_address: settlement.site_address,
+              item_name: order.name,
+              amount: Number(order.amount)
+            });
+          }
+        });
+      } catch (err) {
+        console.error('JSON 파싱 에러:', err);
+      }
+    });
+    
+    // 배열로 변환하고 총액 기준으로 정렬
+    const vendorList = Object.values(vendorStats)
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+    
+    res.json({
+      vendors: vendorList,
+      summary: {
+        totalVendors: vendorList.length,
+        totalAmount: vendorList.reduce((sum, v) => sum + v.totalAmount, 0),
+        totalCount: vendorList.reduce((sum, v) => sum + v.count, 0)
+      }
+    });
+  } catch (error) {
+    console.error('❌ 업체별 집계 조회 에러:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // 정산 상세 조회
 app.get('/api/settlements/:id', (req, res) => {
   try {
