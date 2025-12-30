@@ -151,17 +151,25 @@ export default function RecordForm() {
     setLoading(true);
 
     try {
+      // 백엔드 API에 맞게 필드명 변환
+      const submitData = {
+        ...formData,
+        address_detail: formData.site_detail || '', // site_detail → address_detail
+        // site_detail 제거
+      };
+      delete submitData.site_detail;
+
       if (id) {
-        await api.put(`/api/records/${id}`, formData);
+        await api.put(`/api/records/${id}`, submitData);
         alert('시공내역이 수정되었습니다.');
       } else {
-        await api.post('/api/records', formData);
+        await api.post('/api/records', submitData);
         alert('시공내역이 등록되었습니다.');
       }
       navigate('/records');
     } catch (error) {
       console.error('저장 실패:', error);
-      alert('저장에 실패했습니다: ' + error.message);
+      alert('저장에 실패했습니다: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
