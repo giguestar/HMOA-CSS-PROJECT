@@ -38,42 +38,10 @@ function App() {
   };
 
   useEffect(() => {
-    const savedRole = localStorage.getItem('userRole');
-    const savedUser = localStorage.getItem('user');
-    
-    console.log('🔍 localStorage 확인:', { savedRole, savedUser });
-    
-    // localStorage에 유효한 데이터가 있을 때만 자동 로그인
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        console.log('👤 복원된 사용자:', user);
-        console.log('🎭 user.role:', user.role);
-        console.log('🎭 savedRole:', savedRole);
-        
-        if (user && user.username && user.role) {
-          // user 객체의 role을 우선 사용 (더 신뢰할 수 있음)
-          const roleToUse = user.role || savedRole;
-          console.log('✅ 사용할 역할:', roleToUse);
-          
-          setUserRole(roleToUse);
-          setCurrentUser(user);
-          setShowLogin(false);
-        } else {
-          // 잘못된 데이터면 초기화
-          console.log('❌ 잘못된 사용자 데이터, 초기화');
-          localStorage.removeItem('userRole');
-          localStorage.removeItem('user');
-        }
-      } catch (e) {
-        // JSON 파싱 에러면 초기화
-        console.log('❌ JSON 파싱 에러, 초기화:', e);
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('user');
-      }
-    } else {
-      console.log('ℹ️ localStorage 비어있음, 로그인 필요');
-    }
+    // 🔴 localStorage 완전 무시 - 항상 새로 로그인
+    console.log('🔄 localStorage 초기화 중...');
+    localStorage.clear();
+    console.log('✅ localStorage 완전히 비웠음 - 로그인 필요');
   }, []);
 
   // 권한에 따른 메뉴 구성
