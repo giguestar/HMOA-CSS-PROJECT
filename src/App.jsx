@@ -38,10 +38,28 @@ function App() {
   };
 
   useEffect(() => {
-    // 🔴 localStorage 완전 무시 - 항상 새로 로그인
-    console.log('🔄 localStorage 초기화 중...');
-    localStorage.clear();
-    console.log('✅ localStorage 완전히 비웠음 - 로그인 필요');
+    // localStorage에서 로그인 정보 복원
+    const savedRole = localStorage.getItem('userRole');
+    const savedUser = localStorage.getItem('user');
+    
+    console.log('🔍 localStorage 확인:', { savedRole, savedUser });
+    
+    if (savedUser && savedRole) {
+      try {
+        const user = JSON.parse(savedUser);
+        if (user && user.username && user.role) {
+          console.log('✅ 로그인 정보 복원:', user);
+          setUserRole(savedRole);
+          setCurrentUser(user);
+          setShowLogin(false);
+        }
+      } catch (e) {
+        console.error('❌ localStorage 파싱 에러:', e);
+        localStorage.clear();
+      }
+    } else {
+      console.log('ℹ️ localStorage 비어있음, 로그인 필요');
+    }
   }, []);
 
   // 권한에 따른 메뉴 구성
