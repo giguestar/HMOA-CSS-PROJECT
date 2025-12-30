@@ -116,27 +116,23 @@ function App() {
         <main className="max-w-7xl mx-auto px-4 py-6">
           <Routes>
             <Route path="/" element={<Dashboard userRole={userRole} />} />
+            
             {/* 관리자 전용 라우트 */}
-            {userRole === 'admin' && (
-              <>
-                <Route path="/record/new" element={<RecordForm />} />
-                <Route path="/records" element={<RecordList />} />
-                <Route path="/settlements" element={<SettlementList />} />
-                <Route path="/settlements/new" element={<SettlementForm />} />
-                <Route path="/settlements/edit/:id" element={<SettlementForm />} />
-                <Route path="/vendor-stats" element={<VendorStats />} />
-                <Route path="/settlement" element={<Settlement />} />
-              </>
-            )}
+            <Route path="/record/new" element={userRole === 'admin' ? <RecordForm /> : <Dashboard userRole={userRole} />} />
+            <Route path="/records" element={userRole === 'admin' ? <RecordList /> : <Dashboard userRole={userRole} />} />
+            <Route path="/settlements" element={userRole === 'admin' ? <SettlementList /> : <Dashboard userRole={userRole} />} />
+            <Route path="/settlements/new" element={userRole === 'admin' ? <SettlementForm /> : <Dashboard userRole={userRole} />} />
+            <Route path="/settlements/edit/:id" element={userRole === 'admin' ? <SettlementForm /> : <Dashboard userRole={userRole} />} />
+            <Route path="/vendor-stats" element={userRole === 'admin' ? <VendorStats /> : <Dashboard userRole={userRole} />} />
+            <Route path="/settlement" element={userRole === 'admin' ? <Settlement /> : <Dashboard userRole={userRole} />} />
+            
             {/* 관리자 + 매니저 공통 라우트 */}
-            {(userRole === 'admin' || userRole === 'manager') && (
-              <>
-                <Route path="/measurements" element={<MeasurementList />} />
-                <Route path="/measurements/new" element={<MeasurementForm />} />
-                <Route path="/measurements/edit/:id" element={<MeasurementForm />} />
-                <Route path="/record/edit/:id" element={<RecordForm />} />
-              </>
-            )}
+            <Route path="/measurements" element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementList /> : <Dashboard userRole={userRole} />} />
+            <Route path="/measurements/new" element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementForm /> : <Dashboard userRole={userRole} />} />
+            <Route path="/measurements/edit/:id" element={(userRole === 'admin' || userRole === 'manager') ? <MeasurementForm /> : <Dashboard userRole={userRole} />} />
+            <Route path="/record/edit/:id" element={(userRole === 'admin' || userRole === 'manager') ? <RecordForm /> : <Dashboard userRole={userRole} />} />
+            
+            {/* 모든 사용자 접근 가능 */}
             <Route path="/measurement-schedule" element={<MeasurementSchedule userRole={userRole} />} />
             <Route path="/schedule" element={<Schedule userRole={userRole} />} />
           </Routes>
