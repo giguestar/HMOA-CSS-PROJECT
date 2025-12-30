@@ -60,15 +60,15 @@ export default function RecordList() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!window.confirm('⚠️ 진짜 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) return;
 
     try {
       await api.delete(`/api/records/${id}`);
-      alert('삭제되었습니다.');
+      alert('✅ 삭제되었습니다.');
       fetchRecords();
     } catch (error) {
       console.error('삭제 실패:', error);
-      alert('삭제에 실패했습니다.');
+      alert('❌ 삭제에 실패했습니다.');
     }
   };
 
@@ -270,6 +270,12 @@ export default function RecordList() {
                           className="text-blue-600 hover:text-blue-800 mr-2"
                         >
                           수정
+                        </button>
+                        <button
+                          onClick={() => navigate(`/settlements/new?recordId=${record.id}`)}
+                          className="text-green-600 hover:text-green-800 mr-2"
+                        >
+                          정산
                         </button>
                         <button
                           onClick={() => handleDelete(record.id)}

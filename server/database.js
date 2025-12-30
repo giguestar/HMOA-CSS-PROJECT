@@ -54,30 +54,28 @@ export function initDatabase() {
         address_detail TEXT,
         building_unit TEXT,
         frame_count INTEGER DEFAULT 0,
-        team TEXT,
-        settlement_status TEXT,
-        settlement_date TEXT,
         
-        -- 청구 금액 (발주업체에 청구)
-        standard_cost INTEGER DEFAULT 0,
-        total_cost INTEGER DEFAULT 0,
-        protection_cost INTEGER DEFAULT 0,
-        demolition_qty INTEGER DEFAULT 0,
-        demolition_cost INTEGER DEFAULT 0,
-        equipment_desc TEXT,
-        equipment_cost INTEGER DEFAULT 0,
-        equipment_provider TEXT DEFAULT '직영',
+        -- 팀 정보
+        team TEXT,
         demolition_team TEXT DEFAULT '시공팀',
         
-        -- 스케줄 표기용 체크박스
+        -- 장비 정보
+        equipment_provider TEXT DEFAULT '직영',
+        equipment_vendor TEXT,
+        equipment_desc TEXT,
+        
+        -- 몰딩/타일
+        has_molding BOOLEAN DEFAULT 0,
+        has_tile BOOLEAN DEFAULT 0,
+        
+        -- 주문제작 항목들
         has_railing BOOLEAN DEFAULT 0,
         has_security_window BOOLEAN DEFAULT 0,
         has_roll_screen BOOLEAN DEFAULT 0,
         has_louver BOOLEAN DEFAULT 0,
-        has_molding BOOLEAN DEFAULT 0,
-        has_tile BOOLEAN DEFAULT 0,
-        has_molding_tile BOOLEAN DEFAULT 0,
         needs_fabrication BOOLEAN DEFAULT 0,
+        
+        -- 부가시공비
         crane_cost INTEGER DEFAULT 0,
         ladder_jg_cost INTEGER DEFAULT 0,
         ladder_partner_cost INTEGER DEFAULT 0,
@@ -91,22 +89,12 @@ export function initDatabase() {
         other4_cost INTEGER DEFAULT 0,
         other5_desc TEXT,
         other5_cost INTEGER DEFAULT 0,
-        measurement_cost INTEGER DEFAULT 0,
-        cash_collected INTEGER DEFAULT 0,
         
-        -- 지급 금액 (외주팀에 지급)
-        outsource_total_cost INTEGER DEFAULT 0,
-        outsource_team_cost INTEGER DEFAULT 0,
-        actual_settlement INTEGER DEFAULT 0,
-        demolition_outsource_cost INTEGER DEFAULT 0,
-        demolition_baek_cost INTEGER DEFAULT 0,
-        demolition_gs_cost INTEGER DEFAULT 0,
+        -- 정산 상태
+        settlement_status TEXT,
+        settlement_date TEXT,
         
         -- 기타
-        extra_expenses TEXT,
-        extra_expense_amount INTEGER DEFAULT 0,
-        company_payment TEXT,
-        profit_margin INTEGER DEFAULT 0,
         remarks TEXT,
         
         created_at TEXT DEFAULT (datetime('now', 'localtime')),
@@ -215,6 +203,8 @@ export function initDatabase() {
         billing_demolition_cost INTEGER DEFAULT 0,
         billing_equipment_desc TEXT,
         billing_equipment_cost INTEGER DEFAULT 0,
+        billing_equipment_hours INTEGER DEFAULT 0,
+        billing_equipment_minutes INTEGER DEFAULT 0,
         billing_molding_cost INTEGER DEFAULT 0,
         billing_tile_cost INTEGER DEFAULT 0,
         billing_other_cost INTEGER DEFAULT 0,
@@ -229,6 +219,8 @@ export function initDatabase() {
         payment_demolition_unit_price INTEGER DEFAULT 40000,
         payment_demolition_cost INTEGER DEFAULT 0,
         payment_equipment_cost INTEGER DEFAULT 0,
+        payment_equipment_hours INTEGER DEFAULT 0,
+        payment_equipment_minutes INTEGER DEFAULT 0,
         payment_molding_cost INTEGER DEFAULT 0,
         payment_tile_cost INTEGER DEFAULT 0,
         payment_other_cost INTEGER DEFAULT 0,

@@ -29,36 +29,40 @@ export default function RecordForm() {
     building_unit: '',
     frame_count: 0,
     team: '',
-    
-    // 청구 금액
-    standard_cost: 0,
-    protection_cost: 0,
-    demolition_qty: 0,
-    demolition_cost: 0,
-    equipment_desc: '',
-    equipment_cost: 0,
-    equipment_provider: '직영',
     demolition_team: '시공팀',
-    measurement_cost: 0,
     
-    // 스케줄 표기용 체크박스
+    // 장비 정보
+    equipment_provider: '직영',
+    equipment_vendor: '',
+    equipment_desc: '',
+    
+    // 몰딩/타일
+    has_molding: false,
+    has_tile: false,
+    
+    // 주문제작 항목들
     has_railing: false,
     has_security_window: false,
     has_roll_screen: false,
     has_louver: false,
-    has_molding: false,
-    has_tile: false,
-    has_molding_tile: false,
     needs_fabrication: false,
     
-    // 지급 금액 (청구와 다를 경우만 입력)
-    outsource_total_cost: 0,
-    actual_settlement: 0,
+    // 부가시공비
+    crane_cost: 0,
+    ladder_jg_cost: 0,
+    ladder_partner_cost: 0,
+    other1_desc: '',
+    other1_cost: 0,
+    other2_desc: '',
+    other2_cost: 0,
+    other3_desc: '',
+    other3_cost: 0,
+    other4_desc: '',
+    other4_cost: 0,
+    other5_desc: '',
+    other5_cost: 0,
     
-    remarks: '',
-    
-    // 일반 부가작업 (기타 작업들)
-    additionalWorks: []
+    remarks: ''
   });
 
   useEffect(() => {
@@ -422,6 +426,21 @@ export default function RecordForm() {
                 >
                   <option value="직영">직영</option>
                   <option value="업체">업체</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">장비업체</label>
+                <select
+                  name="equipment_vendor"
+                  value={formData.equipment_vendor}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">선택안함</option>
+                  <option value="전국사다리">전국사다리</option>
+                  <option value="파트너사다리">파트너사다리</option>
+                  <option value="차량윈치">차량윈치</option>
                 </select>
               </div>
 
