@@ -204,7 +204,10 @@ export function initDatabase() {
         team TEXT,
         
         -- 청구 금액 (대리점에 청구)
-        billing_standard_cost INTEGER DEFAULT 0,
+        billing_standard_cost_1 INTEGER DEFAULT 0,
+        billing_is_electronic_1 BOOLEAN DEFAULT 1,  -- 1: 전산, 0: 현금
+        billing_standard_cost_2 INTEGER DEFAULT 0,
+        billing_is_electronic_2 BOOLEAN DEFAULT 1,  -- 1: 전산, 0: 현금
         billing_frame_count INTEGER DEFAULT 0,
         billing_protection_cost INTEGER DEFAULT 0,
         billing_demolition_qty INTEGER DEFAULT 0,

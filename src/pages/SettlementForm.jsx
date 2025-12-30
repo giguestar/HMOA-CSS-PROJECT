@@ -20,7 +20,10 @@ export default function SettlementForm() {
 
   // 청구분 (대리점)
   const [billing, setBilling] = useState({
-    standard_cost: 0,
+    standard_cost_1: 0,
+    is_electronic_1: true, // 기본값: 전산
+    standard_cost_2: 0,
+    is_electronic_2: true, // 기본값: 전산
     measurement_cost: 0, // 💡 실측비는 청구분에만!
     protection_cost: 0,
     demolition_qty: 0,
@@ -103,7 +106,10 @@ export default function SettlementForm() {
       });
 
       setBilling({
-        standard_cost: data.billing_standard_cost || 0,
+        standard_cost_1: data.billing_standard_cost_1 || 0,
+        is_electronic_1: data.billing_is_electronic_1 !== undefined ? data.billing_is_electronic_1 : true,
+        standard_cost_2: data.billing_standard_cost_2 || 0,
+        is_electronic_2: data.billing_is_electronic_2 !== undefined ? data.billing_is_electronic_2 : true,
         measurement_cost: data.billing_measurement_cost || 0,
         protection_cost: data.billing_protection_cost || 0,
         demolition_qty: data.billing_demolition_qty || 0,
@@ -139,9 +145,12 @@ export default function SettlementForm() {
       // 실측비는 동기화하지 않음!
       if (field === 'measurement_cost') return;
 
-      // 표준시공비는 85% 자동 적용 (옵션)
-      if (field === 'standard_cost') {
-        setPayment({ ...payment, [field]: Math.round(value * 0.85) });
+      // 표준시공비는 기본값으로 동일하게 적용
+      if (field === 'standard_cost_1' || field === 'standard_cost_2') {
+        // standard_cost_1, standard_cost_2 모두 합산하여 payment.standard_cost에 설정
+        const newBilling = { ...billing, [field]: value };
+        const totalStandardCost = (Number(newBilling.standard_cost_1) || 0) + (Number(newBilling.standard_cost_2) || 0);
+        setPayment({ ...payment, standard_cost: totalStandardCost });
       } else {
         setPayment({ ...payment, [field]: value });
       }
@@ -156,14 +165,15 @@ export default function SettlementForm() {
 
   // 총 청구액 계산
   const calculateBillingTotal = () => {
-    const standard = Number(billing.standard_cost) || 0;
+    const standard1 = Number(billing.standard_cost_1) || 0;
+    const standard2 = Number(billing.standard_cost_2) || 0;
     const measurement = Number(billing.measurement_cost) || 0;
     const protection = Number(billing.protection_cost) || 0;
     const demolition = (Number(billing.demolition_qty) || 0) * (Number(billing.demolition_unit_price) || 0);
     const equipment = Number(billing.equipment_cost) || 0;
     const additional = billing.additional_items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
-    return standard + measurement + protection + demolition + equipment + additional;
+    return standard1 + standard2 + measurement + protection + demolition + equipment + additional;
   };
 
   // 총 지급액 계산
@@ -248,7 +258,7 @@ export default function SettlementForm() {
       alert('대리점을 선택해주세요.');
       return;
     }
-    if (!billing.standard_cost) {
+    if (!billing.standard_cost_1 && !billing.standard_cost_2) {
       alert('표준시공비를 입력해주세요.');
       return;
     }
@@ -277,7 +287,10 @@ export default function SettlementForm() {
       settlement_date: basicInfo.settlement_date,
 
       // 청구분
-      billing_standard_cost: billing.standard_cost,
+      billing_standard_cost_1: billing.standard_cost_1,
+      billing_is_electronic_1: billing.is_electronic_1,
+      billing_standard_cost_2: billing.standard_cost_2,
+      billing_is_electronic_2: billing.is_electronic_2,
       billing_measurement_cost: billing.measurement_cost,
       billing_protection_cost: billing.protection_cost,
       billing_demolition_qty: billing.demolition_qty,
@@ -333,6 +346,12 @@ export default function SettlementForm() {
   const isDifferent = (billingField, paymentField) => {
     return billing[billingField] !== payment[paymentField];
   };
+  
+  // 표준시공비 합계와 외주 표준시공비 비교
+  const isStandardCostDifferent = () => {
+    const billingTotal = (Number(billing.standard_cost_1) || 0) + (Number(billing.standard_cost_2) || 0);
+    return billingTotal !== (Number(payment.standard_cost) || 0);
+  };
 
   // 💡 빠른 입력: 일반 철거 단가 자동 설정
   const applyStandardDemolition = () => {
@@ -356,13 +375,22 @@ export default function SettlementForm() {
 
   // 💡 85% 일괄 적용
   const apply85PercentAll = () => {
-    if (!window.confirm('모든 금액을 85%로 일괄 적용하시겠습니까?')) return;
+    if (!window.confirm('시공비 합계(표준+보양+철거+부가)의 85%를 적용하시겠습니까?')) return;
+
+    // 표준시공비 + 보양 + 철거 + 부가시공비 합계
+    const standard1 = Number(billing.standard_cost_1) || 0;
+    const standard2 = Number(billing.standard_cost_2) || 0;
+    const protection = Number(billing.protection_cost) || 0;
+    const demolition = (Number(billing.demolition_qty) || 0) * (Number(billing.demolition_unit_price) || 0);
+    const equipment = Number(billing.equipment_cost) || 0;
+    const additional = billing.additional_items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    
+    const totalConstructionCost = standard1 + standard2 + protection + demolition + equipment + additional;
+    const payment85Percent = Math.round(totalConstructionCost * 0.85);
 
     setPayment({
       ...payment,
-      standard_cost: Math.round(billing.standard_cost * 0.85),
-      protection_cost: Math.round(billing.protection_cost * 0.85),
-      equipment_cost: Math.round(billing.equipment_cost * 0.85)
+      standard_cost: payment85Percent
     });
 
     // 수동 플래그 초기화
@@ -373,7 +401,7 @@ export default function SettlementForm() {
   const checkMissingFields = () => {
     const warnings = [];
 
-    if (billing.standard_cost === 0) {
+    if (billing.standard_cost_1 === 0 && billing.standard_cost_2 === 0) {
       warnings.push('⚠️ 표준시공비가 입력되지 않았습니다.');
     }
 
@@ -544,18 +572,75 @@ export default function SettlementForm() {
                 <span className="mr-2">📊</span> 청구분 (대리점)
               </h3>
 
-              {/* 표준시공비 */}
+              {/* 표준시공비 2줄 (현금/전산 분리) */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   표준시공비 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  value={billing.standard_cost}
-                  onChange={(e) => handleBillingChange('standard_cost', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+                
+                {/* 첫 번째 줄 */}
+                <div className="mb-2 bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-medium text-gray-600">1번</span>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={billing.is_electronic_1}
+                        onChange={(e) => handleBillingChange('is_electronic_1', e.target.checked)}
+                        className="mr-1"
+                      />
+                      <span className="text-xs text-gray-700">전산</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={!billing.is_electronic_1}
+                        onChange={(e) => handleBillingChange('is_electronic_1', !e.target.checked)}
+                        className="mr-1"
+                      />
+                      <span className="text-xs text-gray-700">현금</span>
+                    </label>
+                  </div>
+                  <input
+                    type="number"
+                    value={billing.standard_cost_1}
+                    onChange={(e) => handleBillingChange('standard_cost_1', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="표준시공비 1"
+                  />
+                </div>
+
+                {/* 두 번째 줄 */}
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-medium text-gray-600">2번</span>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={billing.is_electronic_2}
+                        onChange={(e) => handleBillingChange('is_electronic_2', e.target.checked)}
+                        className="mr-1"
+                      />
+                      <span className="text-xs text-gray-700">전산</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={!billing.is_electronic_2}
+                        onChange={(e) => handleBillingChange('is_electronic_2', !e.target.checked)}
+                        className="mr-1"
+                      />
+                      <span className="text-xs text-gray-700">현금</span>
+                    </label>
+                  </div>
+                  <input
+                    type="number"
+                    value={billing.standard_cost_2}
+                    onChange={(e) => handleBillingChange('standard_cost_2', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="표준시공비 2"
+                  />
+                </div>
               </div>
 
               {/* 실측비 (청구분에만!) */}
@@ -712,7 +797,7 @@ export default function SettlementForm() {
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
                   표준시공비 
-                  {isDifferent('standard_cost', 'standard_cost') && (
+                  {isStandardCostDifferent() && (
                     <span className="ml-2 text-xs text-yellow-600">⚠️ 차이 발생</span>
                   )}
                   {paymentManuallyEdited.standard_cost && (
@@ -724,17 +809,17 @@ export default function SettlementForm() {
                   value={payment.standard_cost}
                   onChange={(e) => handlePaymentChange('standard_cost', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 transition-colors ${
-                    isDifferent('standard_cost', 'standard_cost')
+                    isStandardCostDifferent()
                       ? 'bg-yellow-50 border-yellow-400 focus:ring-yellow-500'
                       : 'border-gray-300 focus:ring-green-500'
                   }`}
                 />
                 {autoSync && !paymentManuallyEdited.standard_cost && (
-                  <p className="text-xs text-blue-600 mt-1">🔵 85% 자동계산 활성화</p>
+                  <p className="text-xs text-blue-600 mt-1">🔵 기본값 동일 적용</p>
                 )}
-                {isDifferent('standard_cost', 'standard_cost') && (
+                {isStandardCostDifferent() && (
                   <div className="mt-1 text-xs text-yellow-700 bg-yellow-50 p-2 rounded">
-                    💰 차액: +{formatCurrency(billing.standard_cost - payment.standard_cost)} 원
+                    💰 차액: +{formatCurrency((Number(billing.standard_cost_1) || 0) + (Number(billing.standard_cost_2) || 0) - (Number(payment.standard_cost) || 0))} 원
                   </div>
                 )}
               </div>
