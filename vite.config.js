@@ -11,6 +11,8 @@ export default defineConfig({
       'all',
       '.sandbox.novita.ai',
       '3000-i1n2c951nczu9isc6assz-dfc00ec5.sandbox.novita.ai',
+      '.trycloudflare.com',
+      'apache-bidding-symbol-recreational.trycloudflare.com',
       'localhost',
       '127.0.0.1'
     ],
