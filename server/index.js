@@ -168,9 +168,9 @@ app.post('/api/records', (req, res) => {
         is_resident, site_address, address_detail, building_unit, frame_count, team, settlement_status,
         equipment_desc, equipment_provider, demolition_team,
         has_railing, has_security_window, has_roll_screen, has_louver,
-        has_molding, has_tile, has_molding_tile, needs_fabrication,
+        has_molding, has_tile, needs_fabrication,
         remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insert.run(
@@ -195,7 +195,6 @@ app.post('/api/records', (req, res) => {
       data.has_louver ? 1 : 0,
       data.has_molding ? 1 : 0,
       data.has_tile ? 1 : 0,
-      data.has_molding_tile ? 1 : 0,
       data.needs_fabrication ? 1 : 0,
       data.remarks
     );
@@ -232,7 +231,7 @@ app.put('/api/records/:id', (req, res) => {
         building_unit = ?, frame_count = ?, team = ?, settlement_status = ?,
         equipment_desc = ?, equipment_provider = ?, demolition_team = ?,
         has_railing = ?, has_security_window = ?, has_roll_screen = ?, has_louver = ?,
-        has_molding = ?, has_tile = ?, has_molding_tile = ?, needs_fabrication = ?,
+        has_molding = ?, has_tile = ?, needs_fabrication = ?,
         remarks = ?, updated_at = datetime('now', 'localtime')
       WHERE id = ?
     `);
@@ -259,7 +258,6 @@ app.put('/api/records/:id', (req, res) => {
       data.has_louver ? 1 : 0,
       data.has_molding ? 1 : 0,
       data.has_tile ? 1 : 0,
-      data.has_molding_tile ? 1 : 0,
       data.needs_fabrication ? 1 : 0,
       data.remarks,
       req.params.id

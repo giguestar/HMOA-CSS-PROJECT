@@ -178,7 +178,6 @@ export default function RecordForm() {
         has_louver: formData.has_louver || false,
         has_molding: formData.has_molding || false,
         has_tile: formData.has_tile || false,
-        has_molding_tile: false,
         needs_fabrication: formData.needs_fabrication || false,
         
         remarks: formData.remarks || '',
