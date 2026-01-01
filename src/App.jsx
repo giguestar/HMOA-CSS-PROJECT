@@ -89,7 +89,7 @@ function App() {
     { name: '실측 관리', path: '/measurements', icon: '📏', roles: ['admin', 'manager'], mobileVisible: true },
     { name: '실측 달력', path: '/measurement-schedule', icon: '📆', roles: ['admin', 'manager', 'viewer'], mobileVisible: true },
     { name: '시공내역 등록', path: '/record/new', icon: '✏️', roles: ['admin', 'manager'], mobileVisible: true },
-    { name: '시공내역 조회', path: '/records', icon: '📋', roles: ['admin'], mobileVisible: false },
+    { name: '시공내역 조회', path: '/records', icon: '📋', roles: ['admin', 'manager'], mobileVisible: true },
     { name: '월간 스케줄', path: '/schedule', icon: '📅', roles: ['admin', 'manager', 'viewer'], mobileVisible: true },
     { name: '정산 목록', path: '/settlements', icon: '💰', roles: ['admin'], mobileVisible: false },
     { name: '정산 작성', path: '/settlements/new', icon: '✨', roles: ['admin'], mobileVisible: false },
@@ -170,7 +170,7 @@ function App() {
             />
             <Route 
               path="/records" 
-              element={userRole === 'admin' ? <RecordList /> : <Navigate to="/" replace />} 
+              element={(userRole === 'admin' || userRole === 'manager') ? <RecordList /> : <Navigate to="/" replace />} 
             />
             <Route 
               path="/settlements" 
