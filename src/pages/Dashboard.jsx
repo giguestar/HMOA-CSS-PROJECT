@@ -20,6 +20,56 @@ export default function Dashboard() {
     }
   };
 
+  const handleBackup = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/backup');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `construction_backup_${new Date().toISOString().slice(0, 10)}.db`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      alert('백업이 완료되었습니다!');
+    } catch (error) {
+      alert('백업 실패: ' + error.message);
+    }
+  };
+
+  const handleRestore = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.db';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!confirm('데이터베이스를 복구하시겠습니까?\n기존 데이터는 자동으로 백업됩니다.')) {
+        return;
+      }
+      
+      try {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64Data = btoa(
+            new Uint8Array(event.target.result)
+              .reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
+          
+          await api.post('/api/restore', { data: base64Data });
+          alert('복구가 완료되었습니다! 페이지를 새로고침합니다.');
+          window.location.reload();
+        };
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        alert('복구 실패: ' + error.message);
+      }
+    };
+    input.click();
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -45,14 +95,29 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">대시보드</h1>
-        <div className="text-sm text-gray-500">
-          {new Date().toLocaleDateString('ko-KR', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            weekday: 'long'
-          })}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleBackup}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            📦 백업
+          </button>
+          <button
+            onClick={handleRestore}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+          >
+            🔄 복구
+          </button>
         </div>
+      </div>
+      
+      <div className="text-sm text-gray-500">
+        {new Date().toLocaleDateString('ko-KR', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          weekday: 'long'
+        })}
       </div>
 
       {/* 요약 카드 */}

@@ -1303,6 +1303,57 @@ app.get('/api/outsource-rates', (req, res) => {
   }
 });
 
+// 데이터베이스 백업
+app.get('/api/backup', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const dbPath = path.join(__dirname, 'construction.db');
+    
+    // 백업 파일명 생성 (날짜 포함)
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const backupFileName = `construction_backup_${timestamp}.db`;
+    
+    // 데이터베이스 파일 읽기
+    const dbBuffer = fs.readFileSync(dbPath);
+    
+    // 응답 헤더 설정
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${backupFileName}"`);
+    res.setHeader('Content-Length', dbBuffer.length);
+    
+    console.log(`📦 데이터베이스 백업 생성: ${backupFileName}`);
+    res.send(dbBuffer);
+  } catch (error) {
+    console.error('❌ 백업 생성 실패:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 데이터베이스 복구
+app.post('/api/restore', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const dbPath = path.join(__dirname, 'construction.db');
+    
+    // 기존 DB 백업
+    const backupPath = path.join(__dirname, `construction_before_restore_${Date.now()}.db`);
+    fs.copyFileSync(dbPath, backupPath);
+    console.log(`📦 기존 DB 백업 완료: ${backupPath}`);
+    
+    // 업로드된 파일로 교체
+    const uploadedData = Buffer.from(req.body.data, 'base64');
+    fs.writeFileSync(dbPath, uploadedData);
+    
+    console.log(`✅ 데이터베이스 복구 완료`);
+    res.json({ success: true, message: '데이터베이스가 복구되었습니다.' });
+  } catch (error) {
+    console.error('❌ 복구 실패:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
