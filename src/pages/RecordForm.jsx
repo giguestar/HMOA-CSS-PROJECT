@@ -167,19 +167,9 @@ export default function RecordForm() {
         settlement_status: '',
         
         // 철거/장비 정보
-        demolition_qty: 0,
-        demolition_cost: 0,
         equipment_desc: formData.equipment_desc || '',
-        equipment_cost: 0,
         equipment_provider: formData.equipment_provider || '직영',
         demolition_team: formData.demolition_team || '시공팀',
-        
-        // 청구/지급 금액 (시공등록에서는 0으로)
-        standard_cost: 0,
-        protection_cost: 0,
-        measurement_cost: 0,
-        outsource_total_cost: 0,
-        actual_settlement: 0,
         
         // 주문제작 항목
         has_railing: formData.has_railing || false,

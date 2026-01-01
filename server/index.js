@@ -166,11 +166,11 @@ app.post('/api/records', (req, res) => {
       INSERT INTO construction_records (
         construction_date, client_company, customer_name, customer_phone, special_notes,
         is_resident, site_address, address_detail, building_unit, frame_count, team, settlement_status,
-        demolition_qty, equipment_desc, equipment_provider, demolition_team,
+        equipment_desc, equipment_provider, demolition_team,
         has_railing, has_security_window, has_roll_screen, has_louver,
         has_molding, has_tile, has_molding_tile, needs_fabrication,
         remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = insert.run(
@@ -186,7 +186,6 @@ app.post('/api/records', (req, res) => {
       data.frame_count || 0,
       data.team,
       data.settlement_status || '',
-      data.demolition_qty || 0,
       data.equipment_desc,
       data.equipment_provider || '직영',
       data.demolition_team || '시공팀',
@@ -231,7 +230,7 @@ app.put('/api/records/:id', (req, res) => {
         construction_date = ?, client_company = ?, customer_name = ?, customer_phone = ?,
         special_notes = ?, is_resident = ?, site_address = ?, address_detail = ?,
         building_unit = ?, frame_count = ?, team = ?, settlement_status = ?,
-        demolition_qty = ?, equipment_desc = ?, equipment_provider = ?, demolition_team = ?,
+        equipment_desc = ?, equipment_provider = ?, demolition_team = ?,
         has_railing = ?, has_security_window = ?, has_roll_screen = ?, has_louver = ?,
         has_molding = ?, has_tile = ?, has_molding_tile = ?, needs_fabrication = ?,
         remarks = ?, updated_at = datetime('now', 'localtime')
@@ -251,7 +250,6 @@ app.put('/api/records/:id', (req, res) => {
       data.frame_count || 0,
       data.team,
       data.settlement_status,
-      data.demolition_qty || 0,
       data.equipment_desc,
       data.equipment_provider || '직영',
       data.demolition_team || '시공팀',
