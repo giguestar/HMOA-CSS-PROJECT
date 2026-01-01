@@ -353,19 +353,38 @@ export default function Schedule() {
                           const bgColor = companyInfo.bg;
                           
                           // 주소 파싱 및 표기
-                          // 입력: 주소="울산 북구", building_unit="202동 1501호"
-                          // 출력: "울산 202/1501 (12)"
+                          // 입력: 주소="울산 북구", 상세주소="염포성원상떼빌 115동 302호"
+                          // 출력: "울산 염포성원상떼빌 202/1501 (12)"
                           const addressParts = record.site_address ? record.site_address.split(' ') : [];
                           const addressPrefix = addressParts[0] || ''; // 울산
                           
-                          // building_unit 사용 (DB에서 직접)
-                          const buildingUnit = record.building_unit || '';
+                          // 상세주소에서 아파트명과 동/호 추출
+                          const addressDetail = record.address_detail || ''; // 염포성원상떼빌 115동 302호
+                          
+                          // 정규식으로 동/호 추출: "115동 302호" -> "115/302"
+                          let apartmentName = addressDetail;
+                          let buildingUnit = '';
+                          
+                          // "숫자동 숫자호" 패턴 찾기
+                          const dongHoMatch = addressDetail.match(/(\d+)동\s*(\d+)호/);
+                          if (dongHoMatch) {
+                            // "115동 302호" 찾음
+                            const dong = dongHoMatch[1]; // 115
+                            const ho = dongHoMatch[2];   // 302
+                            buildingUnit = `${dong}/${ho}`;
+                            
+                            // 아파트명 = 동/호 앞부분
+                            apartmentName = addressDetail.substring(0, dongHoMatch.index).trim();
+                          } else if (record.building_unit) {
+                            // building_unit 필드가 있으면 사용
+                            buildingUnit = record.building_unit;
+                          }
                           
                           // 시공틀수 표기
                           const frameDisplay = record.frame_count ? ` (${record.frame_count})` : '';
                           
-                          // 최종 주소: "울산 202/1501 (12)"
-                          const displayAddress = `${addressPrefix} ${buildingUnit}${frameDisplay}`.trim();
+                          // 최종 주소: "울산 염포성원상떼빌 202/1501 (12)"
+                          const displayAddress = `${addressPrefix} ${apartmentName} ${buildingUnit}${frameDisplay}`.trim();
                           
                           // 시공팀 첫 글자
                           const teamInitial = record.team ? record.team.charAt(0) : '';
