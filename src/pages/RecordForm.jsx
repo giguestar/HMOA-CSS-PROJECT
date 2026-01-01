@@ -151,6 +151,18 @@ export default function RecordForm() {
     setLoading(true);
 
     try {
+      // address_detail에서 building_unit 자동 추출
+      // 예: "몬수아이파크 107동 2102호" → "107동 2102호"
+      const addressDetail = formData.site_detail || formData.address_detail || '';
+      let extractedBuildingUnit = formData.building_unit || '';
+      
+      if (addressDetail) {
+        const dongHoMatch = addressDetail.match(/(\d+)동\s*(\d+)호/);
+        if (dongHoMatch) {
+          extractedBuildingUnit = `${dongHoMatch[1]}동 ${dongHoMatch[2]}호`;
+        }
+      }
+      
       // 백엔드 API에 맞게 필드명 변환 및 불필요한 필드 제거
       const submitData = {
         construction_date: formData.construction_date,
@@ -160,8 +172,8 @@ export default function RecordForm() {
         special_notes: formData.special_notes,
         is_resident: formData.is_resident,
         site_address: formData.site_address,
-        address_detail: formData.site_detail || '',
-        building_unit: formData.building_unit,
+        address_detail: addressDetail,
+        building_unit: extractedBuildingUnit,
         frame_count: formData.frame_count || 0,
         team: formData.team,
         settlement_status: '',
