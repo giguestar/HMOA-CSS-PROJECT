@@ -9,6 +9,7 @@ export default function Schedule() {
   const [records, setRecords] = useState([]);
   const [calendarNotes, setCalendarNotes] = useState({});
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null); // 시공 상세 모달용
@@ -18,6 +19,16 @@ export default function Schedule() {
     daily_workers: '',
     off_teams: [] // 배열로 변경 (중복 선택)
   });
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchSchedule();

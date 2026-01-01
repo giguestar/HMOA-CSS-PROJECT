@@ -6,12 +6,23 @@ export default function MeasurementList() {
   const navigate = useNavigate();
   const [measurements, setMeasurements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [filters, setFilters] = useState({
     status: '',
     manager: '',
     priority: ''
   });
   const [currentUser, setCurrentUser] = useState(null);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 현재 로그인한 사용자 정보 가져오기
   useEffect(() => {
