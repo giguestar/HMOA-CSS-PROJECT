@@ -334,9 +334,14 @@ export default function Dashboard() {
                         </span>
                       </div>
 
-                      {/* 주소 */}
+                      {/* 주소 + 동/호수 */}
                       <div className={`${isMobile ? 'text-sm' : 'text-xs'} text-gray-600 mb-2`}>
                         📍 {record.site_address}
+                        {record.building_unit && (
+                          <span className="ml-2 font-bold text-blue-600">
+                            🏢 {record.building_unit}
+                          </span>
+                        )}
                       </div>
 
                       {/* 시공팀 + 프레임 수 */}

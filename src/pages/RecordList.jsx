@@ -252,8 +252,13 @@ export default function RecordList() {
                         {record.customer_name || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="max-w-xs truncate" title={`${record.site_address} ${record.building_unit}`}>
-                          {record.site_address} {record.building_unit}
+                        <div className="max-w-xs" title={`${record.site_address} ${record.building_unit || ''}`}>
+                          <div className="truncate">{record.site_address}</div>
+                          {record.building_unit && (
+                            <div className="font-bold text-blue-600 text-xs mt-0.5">
+                              🏢 {record.building_unit}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">

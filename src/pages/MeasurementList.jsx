@@ -293,6 +293,11 @@ export default function MeasurementList() {
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">{item.site_address}</div>
                         <div className="text-sm text-gray-500">{item.address_detail}</div>
+                        {item.building_unit && (
+                          <div className="text-sm font-bold text-blue-600 mt-1">
+                            🏢 {item.building_unit}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {item.scheduled_measurement_date ? (

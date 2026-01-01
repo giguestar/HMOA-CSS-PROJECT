@@ -297,9 +297,14 @@ export default function MeasurementSchedule() {
                           )}
                         </div>
 
-                        {/* 주소 */}
+                        {/* 주소 + 동/호수 */}
                         <div className="text-sm text-gray-600 mb-2">
                           📍 {measurement.site_address}
+                          {measurement.building_unit && (
+                            <span className="ml-2 font-bold text-blue-600">
+                              🏢 {measurement.building_unit}
+                            </span>
+                          )}
                         </div>
 
                         {/* 담당자 + 시간 + 상태 */}
@@ -416,9 +421,14 @@ export default function MeasurementSchedule() {
                                 )}
                               </div>
                               
-                              {/* 둘째 줄: 주소 */}
+                              {/* 둘째 줄: 주소 + 동/호수 */}
                               <div className={`text-[10px] truncate mb-0.5 ${isCompleted ? 'text-gray-500' : 'text-gray-600'}`}>
                                 {measurement.site_address}
+                                {measurement.building_unit && (
+                                  <span className="ml-1 font-bold text-blue-600">
+                                    🏢{measurement.building_unit}
+                                  </span>
+                                )}
                               </div>
                               
                               {/* 셋째 줄: 매니저 + 시간 + 상태 */}
