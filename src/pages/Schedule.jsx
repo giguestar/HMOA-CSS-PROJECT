@@ -12,16 +12,27 @@ export default function Schedule() {
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null); // 시공 상세 모달용
+  const [teams, setTeams] = useState([]); // 팀 목록
   const [noteForm, setNoteForm] = useState({
     vacation_members: '',
     daily_workers: '',
-    off_teams: ''
+    off_teams: [] // 배열로 변경 (중복 선택)
   });
 
   useEffect(() => {
     fetchSchedule();
     fetchCalendarNotes();
+    fetchTeams();
   }, [currentDate]);
+
+  const fetchTeams = async () => {
+    try {
+      const response = await api.get('/api/settings/teams');
+      setTeams(response.data);
+    } catch (error) {
+      console.error('팀 목록 조회 실패:', error);
+    }
+  };
 
   const fetchSchedule = async () => {
     setLoading(true);
@@ -105,7 +116,7 @@ export default function Schedule() {
     setNoteForm({
       vacation_members: existingNote?.vacation_members || '',
       daily_workers: existingNote?.daily_workers || '',
-      off_teams: existingNote?.off_teams || ''
+      off_teams: existingNote?.off_teams ? existingNote.off_teams.split(',').map(t => t.trim()) : []
     });
     
     setShowNoteModal(true);
@@ -115,7 +126,9 @@ export default function Schedule() {
     try {
       await api.post('/api/calendar-notes', {
         note_date: selectedDate,
-        ...noteForm
+        vacation_members: noteForm.vacation_members,
+        daily_workers: noteForm.daily_workers,
+        off_teams: noteForm.off_teams.join(', ') // 배열을 문자열로 변환
       });
       
       alert('저장되었습니다!');
@@ -309,10 +322,10 @@ export default function Schedule() {
                                   </span>
                                 )}
                                 
-                                {/* 쉬는팀 (파랑) */}
+                                {/* 쉬는팀 (파랑) - X 표시 */}
                                 {dayNote.off_teams && (
                                   <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 font-medium rounded text-[8px]">
-                                    {dayNote.off_teams}
+                                    {dayNote.off_teams.split(',').map(t => t.trim() + 'X').join(', ')}
                                   </span>
                                 )}
                               </>
@@ -537,18 +550,41 @@ export default function Schedule() {
                 />
               </div>
 
-              {/* 쉬는팀 */}
+              {/* 쉬는팀 - 드롭다운 다중 선택 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <span className="text-blue-600">●</span> 쉬는 팀 (X표시)
                 </label>
-                <input
-                  type="text"
-                  value={noteForm.off_teams}
-                  onChange={(e) => setNoteForm({...noteForm, off_teams: e.target.value})}
-                  placeholder="예: 포항팀, 진주팀"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="space-y-2">
+                  {/* 팀 목록 */}
+                  {teams.map(team => (
+                    <label key={team.id} className="flex items-center gap-2 p-2 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={noteForm.off_teams.includes(team.team_name)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNoteForm({...noteForm, off_teams: [...noteForm.off_teams, team.team_name]});
+                          } else {
+                            setNoteForm({...noteForm, off_teams: noteForm.off_teams.filter(t => t !== team.team_name)});
+                          }
+                        }}
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">{team.team_name}</span>
+                    </label>
+                  ))}
+                  
+                  {/* 선택된 팀 표시 */}
+                  {noteForm.off_teams.length > 0 && (
+                    <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+                      <p className="text-xs text-gray-600 mb-1">선택된 팀:</p>
+                      <p className="text-sm font-medium text-blue-700">
+                        {noteForm.off_teams.map(t => `${t}X`).join(', ')}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
