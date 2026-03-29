@@ -6,6 +6,7 @@ export default function RecordList() {
   const navigate = useNavigate();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [filters, setFilters] = useState({
     startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
     endDate: new Date().toISOString().slice(0, 10),
@@ -15,6 +16,16 @@ export default function RecordList() {
 
   const [companies, setCompanies] = useState([]);
   const [teams, setTeams] = useState([]);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     fetchSettings();
@@ -60,15 +71,15 @@ export default function RecordList() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!window.confirm('⚠️ 진짜 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) return;
 
     try {
       await api.delete(`/api/records/${id}`);
-      alert('삭제되었습니다.');
+      alert('✅ 삭제되었습니다.');
       fetchRecords();
     } catch (error) {
       console.error('삭제 실패:', error);
-      alert('삭제에 실패했습니다.');
+      alert('❌ 삭제에 실패했습니다.');
     }
   };
 
@@ -241,8 +252,13 @@ export default function RecordList() {
                         {record.customer_name || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        <div className="max-w-xs truncate" title={`${record.site_address} ${record.building_unit}`}>
-                          {record.site_address} {record.building_unit}
+                        <div className="max-w-xs" title={`${record.site_address} ${record.building_unit || ''}`}>
+                          <div className="truncate">{record.site_address}</div>
+                          {record.building_unit && (
+                            <div className="font-bold text-blue-600 text-xs mt-0.5">
+                              🏢 {record.building_unit}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
@@ -270,6 +286,12 @@ export default function RecordList() {
                           className="text-blue-600 hover:text-blue-800 mr-2"
                         >
                           수정
+                        </button>
+                        <button
+                          onClick={() => navigate(`/settlements/new?recordId=${record.id}`)}
+                          className="text-green-600 hover:text-green-800 mr-2"
+                        >
+                          정산
                         </button>
                         <button
                           onClick={() => handleDelete(record.id)}

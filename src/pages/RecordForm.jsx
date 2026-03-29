@@ -9,6 +9,8 @@ export default function RecordForm() {
   const [companies, setCompanies] = useState([]);
   const [teams, setTeams] = useState([]);
 
+  // console.log('🏗️ RecordForm 렌더링됨!', { id });
+
   const [scheduleWorkTypes] = useState([
     '난간대', '방범창', '몰딩', '타일', '롤망', '루버'
   ]);
@@ -21,40 +23,51 @@ export default function RecordForm() {
     construction_date: new Date().toISOString().slice(0, 10),
     client_company: '',
     customer_name: '',
+    customer_phone: '',
     special_notes: '',
     is_resident: '거주',
     site_address: '',
+    site_detail: '',
     building_unit: '',
+    frame_count: 0,
     team: '',
-    
-    // 청구 금액
-    standard_cost: 0,
-    protection_cost: 0,
-    demolition_qty: 0,
-    demolition_cost: 0,
-    equipment_desc: '',
-    equipment_cost: 0,
-    equipment_provider: '직영',
     demolition_team: '시공팀',
-    measurement_cost: 0,
     
-    // 스케줄 표기용 체크박스
+    // 장비 정보
+    equipment_provider: '직영',
+    equipment_vendor: '',
+    equipment_desc: '',
+    
+    // 몰딩/타일
+    has_molding: false,
+    has_tile: false,
+    
+    // 주문제작 항목들
     has_railing: false,
     has_security_window: false,
     has_roll_screen: false,
     has_louver: false,
-    has_molding: false,
-    has_tile: false,
-    has_molding_tile: false,
+    needs_fabrication: false,
     
-    // 지급 금액 (청구와 다를 경우만 입력)
-    outsource_total_cost: 0,
-    actual_settlement: 0,
+    // 부가작업
+    additionalWorks: [],
     
-    remarks: '',
+    // 부가시공비
+    crane_cost: 0,
+    ladder_jg_cost: 0,
+    ladder_partner_cost: 0,
+    other1_desc: '',
+    other1_cost: 0,
+    other2_desc: '',
+    other2_cost: 0,
+    other3_desc: '',
+    other3_cost: 0,
+    other4_desc: '',
+    other4_cost: 0,
+    other5_desc: '',
+    other5_cost: 0,
     
-    // 일반 부가작업 (기타 작업들)
-    additionalWorks: []
+    remarks: ''
   });
 
   useEffect(() => {
@@ -89,6 +102,22 @@ export default function RecordForm() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // 전화번호 자동 하이픈 처리
+    if (name === 'customer_phone') {
+      const cleaned = value.replace(/[^0-9]/g, '');
+      let formatted = cleaned;
+      if (cleaned.length <= 3) {
+        formatted = cleaned;
+      } else if (cleaned.length <= 7) {
+        formatted = cleaned.slice(0, 3) + '-' + cleaned.slice(3);
+      } else if (cleaned.length <= 11) {
+        formatted = cleaned.slice(0, 3) + '-' + cleaned.slice(3, 7) + '-' + cleaned.slice(7);
+      }
+      setFormData(prev => ({ ...prev, [name]: formatted }));
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : (type === 'number' ? (value === '' ? 0 : parseInt(value)) : value)
@@ -98,7 +127,7 @@ export default function RecordForm() {
   const handleAddWork = () => {
     setFormData(prev => ({
       ...prev,
-      additionalWorks: [...prev.additionalWorks, { work_name: '', cost: 0, notes: '' }]
+      additionalWorks: [...prev.additionalWorks, { work_type: '', cost: 0, notes: '' }]
     }));
   };
 
@@ -122,17 +151,64 @@ export default function RecordForm() {
     setLoading(true);
 
     try {
+      // address_detail에서 building_unit 자동 추출
+      // 예: "몬수아이파크 107동 2102호" → "107동 2102호"
+      const addressDetail = formData.site_detail || formData.address_detail || '';
+      let extractedBuildingUnit = formData.building_unit || '';
+      
+      if (addressDetail) {
+        const dongHoMatch = addressDetail.match(/(\d+)동\s*(\d+)호/);
+        if (dongHoMatch) {
+          extractedBuildingUnit = `${dongHoMatch[1]}동 ${dongHoMatch[2]}호`;
+        }
+      }
+      
+      // 백엔드 API에 맞게 필드명 변환 및 불필요한 필드 제거
+      const submitData = {
+        construction_date: formData.construction_date,
+        client_company: formData.client_company,
+        customer_name: formData.customer_name,
+        customer_phone: formData.customer_phone,
+        special_notes: formData.special_notes,
+        is_resident: formData.is_resident,
+        site_address: formData.site_address,
+        address_detail: addressDetail,
+        building_unit: extractedBuildingUnit,
+        frame_count: formData.frame_count || 0,
+        team: formData.team,
+        settlement_status: '',
+        
+        // 철거/장비 정보
+        equipment_desc: formData.equipment_desc || '',
+        equipment_provider: formData.equipment_provider || '직영',
+        demolition_team: formData.demolition_team || '시공팀',
+        
+        // 주문제작 항목
+        has_railing: formData.has_railing || false,
+        has_security_window: formData.has_security_window || false,
+        has_roll_screen: formData.has_roll_screen || false,
+        has_louver: formData.has_louver || false,
+        has_molding: formData.has_molding || false,
+        has_tile: formData.has_tile || false,
+        needs_fabrication: formData.needs_fabrication || false,
+        
+        remarks: formData.remarks || '',
+        
+        // 부가작업
+        additionalWorks: formData.additionalWorks || []
+      };
+
       if (id) {
-        await api.put(`/api/records/${id}`, formData);
+        await api.put(`/api/records/${id}`, submitData);
         alert('시공내역이 수정되었습니다.');
       } else {
-        await api.post('/api/records', formData);
+        await api.post('/api/records', submitData);
         alert('시공내역이 등록되었습니다.');
       }
       navigate('/records');
     } catch (error) {
       console.error('저장 실패:', error);
-      alert('저장에 실패했습니다: ' + error.message);
+      alert('저장에 실패했습니다: ' + (error.response?.data?.error || error.message));
     } finally {
       setLoading(false);
     }
@@ -170,16 +246,16 @@ export default function RecordForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  시공일 <span className="text-red-500">*</span>
+                  시공일 <span className="text-gray-400">(선택사항 - 미정 가능)</span>
                 </label>
                 <input
                   type="date"
                   name="construction_date"
                   value={formData.construction_date}
                   onChange={handleChange}
-                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">비워두면 "시공일 미정"으로 등록됩니다</p>
               </div>
 
               <div>
@@ -209,22 +285,36 @@ export default function RecordForm() {
                   name="customer_name"
                   value={formData.customer_name}
                   onChange={handleChange}
+                  placeholder="김남권"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">고객 연락처</label>
+                <input
+                  type="text"
+                  name="customer_phone"
+                  value={formData.customer_phone}
+                  onChange={handleChange}
+                  placeholder="010-1234-5678 (자동 하이픈)"
+                  maxLength="13"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">AS/연락용 (스케줄에는 미표시)</p>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  시공팀 <span className="text-red-500">*</span>
+                  시공팀 <span className="text-gray-400">(선택사항)</span>
                 </label>
                 <select
                   name="team"
                   value={formData.team}
                   onChange={handleChange}
-                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">선택하세요</option>
+                  <option value="">선택 없음</option>
                   {teams.map(team => (
                     <option key={team.id} value={team.team_name}>
                       {team.team_name}
@@ -258,85 +348,76 @@ export default function RecordForm() {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">현장 주소</label>
                 <input
                   type="text"
                   name="site_address"
                   value={formData.site_address}
                   onChange={handleChange}
-                  placeholder="울산 남구"
+                  placeholder="울산 북구"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">동/호수</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">상세주소 (아파트명 + 동호)</label>
                 <input
                   type="text"
-                  name="building_unit"
-                  value={formData.building_unit}
+                  name="address_detail"
+                  value={formData.address_detail}
                   onChange={handleChange}
-                  placeholder="옥동 서광 101동 1608호"
+                  placeholder="새로은 201동 1002호"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <p className="text-xs text-gray-500 mt-1">스케줄에 동/호 형식으로 표시됩니다</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">시공틀수</label>
+                <input
+                  type="number"
+                  name="frame_count"
+                  value={formData.frame_count || ''}
+                  onChange={handleChange}
+                  placeholder="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">스케줄에 동/호(시공틀수)로 표기됩니다</p>
               </div>
             </div>
           </section>
 
-          {/* 청구 금액 */}
+          {/* 시공 세부 정보 */}
           <section className="border-b pb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">💰 청구 금액 (발주업체에 청구)</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">🔧 시공 세부 정보</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">표준시공비</label>
-                <input
-                  type="number"
-                  name="standard_cost"
-                  value={formData.standard_cost || ''}
+                <label className="block text-sm font-medium text-gray-700 mb-1">장비 주체</label>
+                <select
+                  name="equipment_provider"
+                  value={formData.equipment_provider}
                   onChange={handleChange}
-                  placeholder="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.standard_cost)}원</p>
+                >
+                  <option value="직영">직영</option>
+                  <option value="업체">업체</option>
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">보양비</label>
-                <input
-                  type="number"
-                  name="protection_cost"
-                  value={formData.protection_cost || ''}
+                <label className="block text-sm font-medium text-gray-700 mb-1">장비업체</label>
+                <select
+                  name="equipment_vendor"
+                  value={formData.equipment_vendor}
                   onChange={handleChange}
-                  placeholder="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.protection_cost)}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">철거 수량</label>
-                <input
-                  type="number"
-                  name="demolition_qty"
-                  value={formData.demolition_qty || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">철거비</label>
-                <input
-                  type="number"
-                  name="demolition_cost"
-                  value={formData.demolition_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.demolition_cost)}원</p>
+                >
+                  <option value="">선택안함</option>
+                  <option value="전국사다리">전국사다리</option>
+                  <option value="파트너사다리">파트너사다리</option>
+                  <option value="차량윈치">차량윈치</option>
+                </select>
               </div>
 
               <div>
@@ -352,32 +433,6 @@ export default function RecordForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">장비비</label>
-                <input
-                  type="number"
-                  name="equipment_cost"
-                  value={formData.equipment_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.equipment_cost)}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">장비 주체</label>
-                <select
-                  name="equipment_provider"
-                  value={formData.equipment_provider}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="직영">직영</option>
-                  <option value="업체">업체</option>
-                </select>
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">철거팀</label>
                 <select
                   name="demolition_team"
@@ -389,110 +444,31 @@ export default function RecordForm() {
                   <option value="경산철거">경산철거</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">실측비</label>
-                <input
-                  type="number"
-                  name="measurement_cost"
-                  value={formData.measurement_cost || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.measurement_cost)}원</p>
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="bg-blue-50 p-4 rounded-md">
-                  <p className="text-sm font-medium text-blue-900">
-                    총 청구 금액: <span className="text-xl font-bold">
-                      {formatCurrency(
-                        (formData.standard_cost || 0) + 
-                        (formData.protection_cost || 0) + 
-                        (formData.demolition_cost || 0) + 
-                        (formData.equipment_cost || 0) + 
-                        (formData.measurement_cost || 0)
-                      )}원
-                    </span>
-                  </p>
-                </div>
-              </div>
+            </div>
+            <div className="mt-4 p-4 bg-blue-50 rounded-md">
+              <p className="text-sm text-blue-800">
+                💡 <strong>안내:</strong> 청구금액과 지급금액은 정산 작성 시 입력합니다.
+              </p>
             </div>
           </section>
 
-          {/* 지급 금액 */}
+          {/* 주문제작 시공 항목 */}
           <section className="border-b pb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">💸 지급 금액 (외주팀에 지급)</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">🔧 주문제작 시공 항목</h2>
             <p className="text-sm text-gray-600 mb-4">
-              💡 청구금액과 <strong>다른 경우에만</strong> 입력하세요. 비워두면 청구금액과 동일하게 적용됩니다.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">외주 공사비</label>
-                <input
-                  type="number"
-                  name="outsource_total_cost"
-                  value={formData.outsource_total_cost || ''}
-                  onChange={handleChange}
-                  placeholder="청구금액과 동일 (자동 계산)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(getDisplayPayment())}원</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">실정산 금액</label>
-                <input
-                  type="number"
-                  name="actual_settlement"
-                  value={formData.actual_settlement || ''}
-                  onChange={handleChange}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formatCurrency(formData.actual_settlement)}원</p>
-              </div>
-
-              <div className="md:col-span-2">
-                <div className="bg-green-50 p-4 rounded-md">
-                  <p className="text-sm font-medium text-green-900">
-                    총 지급 금액: <span className="text-xl font-bold">
-                      {formatCurrency(getDisplayPayment())}원
-                    </span>
-                  </p>
-                  <p className="text-xs text-green-700 mt-1">
-                    마진: {formatCurrency(
-                      ((formData.standard_cost || 0) + 
-                      (formData.protection_cost || 0) + 
-                      (formData.demolition_cost || 0) + 
-                      (formData.equipment_cost || 0) + 
-                      (formData.measurement_cost || 0)) - getDisplayPayment()
-                    )}원
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 스케줄 표기 작업 */}
-          <section className="border-b pb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">📋 스케줄 표기 작업</h2>
-            <p className="text-sm text-gray-600 mb-4">
-              체크한 항목은 스케줄표에 색상으로 표기됩니다.
+              루버, 방범창, 롤망, 난간대 등 주문제작 필요한 항목을 선택하세요.
             </p>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
                 <input
                   type="checkbox"
-                  name="has_railing"
-                  checked={formData.has_railing}
+                  name="has_louver"
+                  checked={formData.has_louver}
                   onChange={handleChange}
                   className="mr-2 w-4 h-4"
                 />
-                <span className="text-orange-700 font-medium">난간대</span>
+                <span className="text-orange-700 font-medium">루버</span>
               </label>
 
               <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
@@ -520,14 +496,24 @@ export default function RecordForm() {
               <label className="flex items-center p-3 border-2 border-orange-300 bg-orange-50 rounded-md cursor-pointer hover:bg-orange-100">
                 <input
                   type="checkbox"
-                  name="has_louver"
-                  checked={formData.has_louver}
+                  name="has_railing"
+                  checked={formData.has_railing}
                   onChange={handleChange}
                   className="mr-2 w-4 h-4"
                 />
-                <span className="text-orange-700 font-medium">루버</span>
+                <span className="text-orange-700 font-medium">난간대</span>
               </label>
+            </div>
+          </section>
 
+          {/* 몰딩/타일 여부 */}
+          <section className="border-b pb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">🎨 몰딩/타일 여부</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              몰딩과 타일을 동시에 체크하면 <strong>"몰.타"</strong>로 표기됩니다.
+            </p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
                 <input
                   type="checkbox"
@@ -549,16 +535,30 @@ export default function RecordForm() {
                 />
                 <span className="text-purple-700 font-medium">타일</span>
               </label>
+            </div>
 
-              <label className="flex items-center p-3 border-2 border-purple-300 bg-purple-50 rounded-md cursor-pointer hover:bg-purple-100">
+            {/* 몰.타 표시 */}
+            {formData.has_molding && formData.has_tile && (
+              <div className="mt-4 p-3 bg-purple-100 border-2 border-purple-400 rounded-md">
+                <p className="text-purple-800 font-bold text-center">✨ 선택된 항목: 몰.타</p>
+              </div>
+            )}
+          </section>
+
+          {/* 제작창 (현금수금) */}
+          <section className="border-b pb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">💰 제작창 (현금수금)</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <label className="flex items-center p-4 border-2 border-red-300 bg-red-50 rounded-md cursor-pointer hover:bg-red-100">
                 <input
                   type="checkbox"
-                  name="has_molding_tile"
-                  checked={formData.has_molding_tile}
+                  name="needs_fabrication"
+                  checked={formData.needs_fabrication}
                   onChange={handleChange}
-                  className="mr-2 w-4 h-4"
+                  className="mr-3 w-5 h-5"
                 />
-                <span className="text-purple-700 font-medium">몰+타</span>
+                <span className="text-red-700 font-medium text-lg">제작창 (현금수금)</span>
               </label>
             </div>
           </section>
